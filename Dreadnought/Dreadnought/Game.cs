@@ -50,7 +50,7 @@ namespace Dreadnought {
 			host.Child = c;
 			c.MouseEnter += new System.Windows.Input.MouseEventHandler(c_MouseEnter);
 			c.MouseLeave += new System.Windows.Input.MouseEventHandler(c_MouseLeave);
-			c.Output = "Test";
+			c.Output = "TEst3";
 			host.Location = new System.Drawing.Point(0, 0);
 			host.Size = new System.Drawing.Size(200, Window.ClientBounds.Height);
 			host.BackColorTransparent = true;
