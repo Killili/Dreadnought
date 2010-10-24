@@ -1,2 +1,28 @@
-Irgendwas sinnvolles
-jetzt parkt auch der panzer hinterm berch
+
+##########brainstorm##############
+
+##Spielidee:
+	Schlacht-Raumschiff Sim (KEIN arcade)
+	newtonische flugsimulation
+	homeworld navigation; hold rechtsklick = schiff drehen
+	salvage: großer kram für große schiffe
+			kleiner kram für kleine schiffe
+			evolution mit schiffmodellen (klauen is besser als bauen)
+			kastenbau-schiffe
+			verlieren bekommt gegner schiff, oder tauschhandel
+	NTH: wegpunkte beim navigieren
+	
+
+##ohne techtree, alles ist verfügbar, muss nur gefunden/gebaut werden
+##bauen mit salvaged zeug:
+	counter-weapons; weapon vs schild
+		weapons: partikel -> kinetic -> Missle
+		partikel = partikelwaffe mit laser-zielvisir
+			kinetik-bahn vorrausberechnen
+			auf kinetik schießen -> flugbahn ändern
+		kinetic = aim-system berechnet flugbahn, missle explodiert
+		missle = weicht zielsuchsystem von partikel aus
+	slot für waffen UND schild
+	3 panzerungen gegen alle art von waffen
+	partikel/schilde brauchen strom
+	kinetic/missle brauchen lagerplatz
