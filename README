@@ -1,3 +1,10 @@
+##################################################
+## DREADNOUGHT: stealing is better than dealing ##
+## this is a README for Dreadnought							##
+## Author: Killili															##
+## Author: nurbs999															##
+##################################################
+
 ﻿##########brainstorm##############
 
 ##Spielidee:
@@ -8,7 +15,15 @@
 			kleiner kram für kleine schiffe
 			evolution mit schiffmodellen (klauen is besser als bauen)
 			kastenbau-schiffe
-			verlieren bekommt gegner schiff, oder tauschhandel
+			nach einem kampf, muss der verlierer (sollte er alle HP
+				verlieren) dem angreifer sein schiff überlassen. angreifer
+				kann drauf verzichten.
+				beim tausch werden die schiffe "wie sie sind" getauscht
+				falls kein tausch stattfindet, repariert der verlierer
+				seinen antrieb (kostet nur zeit, kein material) und muss
+				sich auf die suche nach schrott machen, um sein schiff
+				wieder aufzubauen
+				der gewinner kann den verlierer plündern
 	NTH: wegpunkte beim navigieren
 	
 
@@ -25,3 +40,19 @@
 	3 panzerungen gegen alle art von waffen
 	partikel/schilde brauchen strom
 	kinetic/missle brauchen lagerplatz
+	warp-generator: muss stärker sein, als die masse des schiffes;
+		mindestgeschwindigkeit für spring muss erreicht werden
+	warp-jammer: erhöht die masse des gegner schiffes prozentual
+		kann zusammengeschaltet werden, d.h. ein jammer erhöht masse
+		um zB 10% des letzten wertes (1.stufe: 110%, 2.stufe 121%, 3.stufe:133%....)
+		1.stufe = 1 jammer, 2.stufe = 2 jammer
+		so können auch mehrere kleine schiffe ein großes vor dem flüchten stoppen
+		
+##prologe
+The Universe in a post-tech age. All technologies there are to be discovered, got discovered
+and people just live to have fun. Even fights are fought for fun, not because of emotions
+or greed. So, there is that one young boy in the mid-twenties living on Etakar, a planet far
+away from a planet once called earth. It took him two 'Etakar'years
+to find all parts for his first small spaceship. He starts his journey to space to find
+more parts, to build a bigger, and one day, to build his own Dreadnought...
+Here the game starts ;)
