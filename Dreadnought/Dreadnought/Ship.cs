@@ -37,8 +37,8 @@ namespace Dreadnought {
 			transforms = new Matrix[model.Bones.Count];
 			moment = new Vector3(0.0f);
 			position = new Vector3(0.0f);
-			speedLimit = 0.1f;
-			turnLimit = 0.001f;
+			speedLimit = 0.02f;
+			turnLimit = 0.0002f;
 			helpSpeed = 0.01f;
 			rotation = new Vector3(0.0f);
 			orientation = new Quaternion(Vector3.Up,0f);
@@ -163,12 +163,28 @@ namespace Dreadnought {
 			moment -= Vector3.Normalize(moment) * speedLimit;
 		}
 
-		internal void turnUp() {
+		public void turnUp() {
 			rotation.X += turnLimit;
 		}
 
-		internal void turnDown() {
+		public void turnDown() {
 			rotation.X -= turnLimit;
+		}
+
+		public void rise() {
+			moment += Vector3.Transform(Vector3.Up, orientation) * speedLimit; 
+		}
+
+		public void sink() {
+			moment -= Vector3.Transform(Vector3.Up, orientation) * speedLimit; 
+		}
+
+		internal void rollLeft() {
+			throw new NotImplementedException();
+		}
+
+		internal void rollRight() {
+			throw new NotImplementedException();
 		}
 	}
 }
