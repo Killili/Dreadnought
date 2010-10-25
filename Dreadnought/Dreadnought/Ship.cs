@@ -48,6 +48,7 @@ namespace Dreadnought {
 			position += moment;
 			orientation = Quaternion.Concatenate( orientation , Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, rotation.Y));
 			orientation = Quaternion.Concatenate( orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, rotation.X));
+			orientation = Quaternion.Concatenate(orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Forward, rotation.Z));
 			orientation.Normalize();
 			//orientation = Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, 0f);
 			
@@ -157,6 +158,13 @@ namespace Dreadnought {
 			} else if(rotation.X < 0) {
 				rotation.X += turnLimit;
 			}
+			if(Math.Abs(rotation.Z) <= turnLimit) {
+				rotation.Z = 0;
+			} else if(rotation.Z > 0) {
+				rotation.Z -= turnLimit;
+			} else if(rotation.Z < 0) {
+				rotation.Z += turnLimit;
+			}
 		}
 
 		public void counterMoment() {
@@ -180,11 +188,11 @@ namespace Dreadnought {
 		}
 
 		internal void rollLeft() {
-			throw new NotImplementedException();
+			rotation.Z += turnLimit;
 		}
 
 		internal void rollRight() {
-			throw new NotImplementedException();
+			rotation.Z -= turnLimit;
 		}
 	}
 }
