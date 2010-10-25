@@ -100,12 +100,15 @@ namespace Dreadnought {
 		protected override void Update(GameTime gameTime) {
 			// Allows the game to exit
 			KeyboardState ks = Keyboard.GetState(PlayerIndex.One);
-			if(ks.IsKeyDown(Keys.Q)) {
+			MouseState ms = Mouse.GetState();
+
+			if(ks.IsKeyDown(Keys.Escape)) {
 				this.Exit();
 			}
-			if(ks.IsKeyDown(Keys.W)) {
+
+			if(ks.IsKeyDown(Keys.Up)) {
 				ship.accelerate();
-			} else if(ks.IsKeyDown(Keys.S)) {
+			} else if(ks.IsKeyDown(Keys.Down)) {
 				ship.decelerate();
 			}
 			if(ks.IsKeyDown(Keys.A)) {
@@ -114,25 +117,37 @@ namespace Dreadnought {
 				ship.turnRight();
 			}
 
-			if(ks.IsKeyDown(Keys.F)){
+			if(ks.IsKeyDown(Keys.X)){
 				ship.counterRotation();
 			}
-			if(ks.IsKeyDown(Keys.E)) {
+			if(ks.IsKeyDown(Keys.C)) {
 				ship.counterMoment();
 			}
 
-			if(ks.IsKeyDown(Keys.Up)) {
+			if(ks.IsKeyDown(Keys.S)) {
 				ship.turnUp();
-			}
-			if(ks.IsKeyDown(Keys.Down)) {
+			} else if(ks.IsKeyDown(Keys.W)) {
 				ship.turnDown();
 			}
 
+			if(ks.IsKeyDown(Keys.R)) {
+				ship.rise();
+			} else if(ks.IsKeyDown(Keys.F)) {
+				ship.sink();
+			}
+
+			if(ks.IsKeyDown(Keys.Q)) {
+				ship.rollLeft();
+			} else if(ks.IsKeyDown(Keys.E)) {
+				ship.rollRight();
+			}
+
+
 			if(followMouse) {
-				MouseState ms = Mouse.GetState();
 				Camera.Position = new Vector3(1, 1000+ms.ScrollWheelValue , 1);
 			}
-			Camera.LookAt = Vector3.Zero;// ship.Position;
+			//Camera.Position = ship.Position - new Vector3(0f, -500f, -500f);
+			Camera.LookAt = ship.Position;
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
