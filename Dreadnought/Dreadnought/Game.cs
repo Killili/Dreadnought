@@ -19,15 +19,20 @@ namespace Dreadnought {
 	/// </summary>
 	public class Game : Microsoft.Xna.Framework.Game {
 		GraphicsDeviceManager graphics;
+        
 		Ship ship;
 		private bool followMouse;
+        private int height = 768;
+        private int width = 1280;
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
-
+        //FormHandle windowFormHandle;
 
 		public Game() {
 			graphics = new GraphicsDeviceManager(this);
-
+            graphics.PreferredBackBufferHeight = height;
+            graphics.PreferredBackBufferWidth = width;
+            graphics.ApplyChanges();
 			Content.RootDirectory = "Content";
 		}
 
@@ -41,7 +46,7 @@ namespace Dreadnought {
 			// TODO: Add your initialization logic here
 
 			base.Initialize();
-			Viewport v = GraphicsDevice.Viewport;
+            Viewport v = GraphicsDevice.Viewport;
 			v.Width = Window.ClientBounds.Width - 200;
 			v.X = 200;
 			GraphicsDevice.Viewport = v;
@@ -56,6 +61,10 @@ namespace Dreadnought {
 			host.BackColorTransparent = true;
 			System.Windows.Forms.Control.FromHandle(Window.Handle).Controls.Add(host);
 			followMouse = true;
+            //windowFormHandle = System.Windows.Forms.Control.FromHandle(Window.Handle);
+            System.Windows.Forms.Control.FromHandle(Window.Handle).Width = width;
+            System.Windows.Forms.Control.FromHandle(Window.Handle).Height = height;
+            
 		}
 
 		void mouseLeftMenu(object sender, System.Windows.Input.MouseEventArgs e) {
