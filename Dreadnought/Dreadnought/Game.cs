@@ -48,8 +48,8 @@ namespace Dreadnought {
 			ElementHost host = new ElementHost();
 			Sidemenu c = new Sidemenu();
 			host.Child = c;
-			c.MouseEnter += new System.Windows.Input.MouseEventHandler(c_MouseEnter);
-			c.MouseLeave += new System.Windows.Input.MouseEventHandler(c_MouseLeave);
+			c.MouseEnter += new System.Windows.Input.MouseEventHandler(mouseEnteredMenu);
+			c.MouseLeave += new System.Windows.Input.MouseEventHandler(mouseLeftMenu);
 			c.Output = "TEst3";
 			host.Location = new System.Drawing.Point(0, 0);
 			host.Size = new System.Drawing.Size(200, Window.ClientBounds.Height);
@@ -58,11 +58,11 @@ namespace Dreadnought {
 			followMouse = true;
 		}
 
-		void c_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e) {
+		void mouseLeftMenu(object sender, System.Windows.Input.MouseEventArgs e) {
 			followMouse = true;
 		}
 
-		void c_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e) {
+		void mouseEnteredMenu(object sender, System.Windows.Input.MouseEventArgs e) {
 			followMouse = false;
 		}
 
@@ -75,6 +75,7 @@ namespace Dreadnought {
 			World = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
 			Camera = new Common.Camera(this);
 			Camera.Load(Content);
+			Camera.Position = new Vector3(1, 1000, 1);
 			ship = new Ship(this);
 			ship.Load(Content);
 
@@ -98,14 +99,40 @@ namespace Dreadnought {
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Update(GameTime gameTime) {
 			// Allows the game to exit
-			if(Keyboard.GetState(PlayerIndex.One).IsKeyDown(Keys.Q)) {
+			KeyboardState ks = Keyboard.GetState(PlayerIndex.One);
+			if(ks.IsKeyDown(Keys.Q)) {
 				this.Exit();
+			}
+			if(ks.IsKeyDown(Keys.W)) {
+				ship.accelerate();
+			} else if(ks.IsKeyDown(Keys.S)) {
+				ship.decelerate();
+			}
+			if(ks.IsKeyDown(Keys.A)) {
+				ship.turnLeft();
+			} else if(ks.IsKeyDown(Keys.D)) {
+				ship.turnRight();
+			}
+
+			if(ks.IsKeyDown(Keys.F)){
+				ship.counterRotation();
+			}
+			if(ks.IsKeyDown(Keys.E)) {
+				ship.counterMoment();
+			}
+
+			if(ks.IsKeyDown(Keys.Up)) {
+				ship.turnUp();
+			}
+			if(ks.IsKeyDown(Keys.Down)) {
+				ship.turnDown();
 			}
 
 			if(followMouse) {
 				MouseState ms = Mouse.GetState();
-				Camera.Position = new Vector3(ms.X, ms.Y, ms.ScrollWheelValue);
+				Camera.Position = new Vector3(1, 1000+ms.ScrollWheelValue , 1);
 			}
+			Camera.LookAt = Vector3.Zero;// ship.Position;
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
