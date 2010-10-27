@@ -2,7 +2,8 @@ using System;
 
 namespace Dreadnought
 {
-#if WINDOWS || XBOX
+#if WINDOWS
+    // || XBOX /* i dont expect this code to run on XBox */
     static class Program
     {
         /// <summary>
