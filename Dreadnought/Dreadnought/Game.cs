@@ -12,7 +12,6 @@ using Dreadnought.Common;
 using System.Windows.Forms.Integration;
 using DreadnoughtUI;
 
-
 namespace Dreadnought {
 	/// <summary>
 	/// This is the main type for your game
@@ -24,16 +23,25 @@ namespace Dreadnought {
 
 		Ship ship;
 		private bool followMouse;
-		private int height = 768;
-		private int width = 1280;
+		
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
 
-		public Game() {
+		#region Config and Windowsstuff
+		private void config_init_stuff() {
+			AppDomain.CurrentDomain.UnhandledException += (s, e) => {
+				Exception ex = (Exception)e.ExceptionObject;
+				System.Windows.MessageBox.Show(ex.Message);
+			};
 			graphics = new GraphicsDeviceManager(this);
-			graphics.PreferredBackBufferHeight = height;
-			graphics.PreferredBackBufferWidth = width;
+			graphics.PreferredBackBufferHeight = 768;
+			graphics.PreferredBackBufferWidth = 200 + 1024;
 			graphics.ApplyChanges();
+		}
+		#endregion
+
+		public Game() {
+			config_init_stuff();
 			Content.RootDirectory = "Content";
 		}
 
@@ -155,6 +163,11 @@ namespace Dreadnought {
 				ship.strafeRight();
 			}
 
+			if(ks.IsKeyDown(Keys.L)) {
+				ship.turnToFace(Vector3.Right);
+			} else if(ks.IsKeyDown(Keys.J)) {
+				ship.turnToFace(Vector3.Left);
+			}
 
 			if(followMouse) {
 				Camera.Position = new Vector3(1, 1000 + ms.ScrollWheelValue, 1);
