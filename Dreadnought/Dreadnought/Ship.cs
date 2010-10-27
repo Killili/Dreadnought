@@ -8,16 +8,16 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Dreadnought {
 	class Thruster {
-		public enum ThrustDirection{ Forward,Backward,FrontLeft,FrontRight,BackLeft,BackRight,FrontUp,FrontDown,BackUp,BackDown }
+		public enum ThrustDirection { Forward, Backward, FrontLeft, FrontRight, BackLeft, BackRight, FrontUp, FrontDown, BackUp, BackDown }
 		private Dictionary<ThrustDirection, TimeSpan> fireDuration;
 		private TimeSpan lastUpdate;
 
 		public Thruster(Ship ship) {
-			fireDuration = new Dictionary<ThrustDirection,TimeSpan>();
+			fireDuration = new Dictionary<ThrustDirection, TimeSpan>();
 			ship.Thrust += FireThruster;
 			Game.GameTimeUpdate += Update;
 		}
-		private void FireThruster(ThrustDirection dir){
+		private void FireThruster(ThrustDirection dir) {
 			fireDuration[dir] = lastUpdate + TimeSpan.FromSeconds(0.01);
 		}
 
@@ -28,7 +28,7 @@ namespace Dreadnought {
 		public bool IsActive(ModelMesh mesh) {
 			if(mesh.Tag == null) {
 				ThrustDirection temp;
-				Enum.TryParse<ThrustDirection>(mesh.Name, true, out temp );
+				Enum.TryParse<ThrustDirection>(mesh.Name, true, out temp);
 				mesh.Tag = temp;
 			}
 			try {
@@ -85,10 +85,10 @@ namespace Dreadnought {
 
 		private Vector3 moment;
 		private Vector3 position;
-		
+
 		private Quaternion orientation;
 		private Vector3 rotation;
-		
+
 		private float speedLimit;
 		private float turnLimit;
 		private float helpSpeed;
@@ -98,8 +98,8 @@ namespace Dreadnought {
 
 		public delegate void ThrusterEvent(Thruster.ThrustDirection dir);
 		public event ThrusterEvent Thrust;
-		
-		public Vector3 Position { get{ return position; }  set{ position = value;} }
+
+		public Vector3 Position { get { return position; } set { position = value; } }
 
 		public Ship(Game game) {
 			this.game = game;
@@ -116,7 +116,7 @@ namespace Dreadnought {
 			turnLimit = 0.0002f;
 			helpSpeed = 0.01f;
 			rotation = new Vector3(0.0f);
-			orientation = new Quaternion(Vector3.Up,0f);
+			orientation = new Quaternion(Vector3.Up, 0f);
 
 			shipModel = walkModelTree(model.Bones["Ship"]);
 			thrusterModel = walkModelTree(model.Bones["Thruster"]);
@@ -125,13 +125,13 @@ namespace Dreadnought {
 
 		public void Update(GameTime gameTime) {
 			position += moment;
-			orientation = Quaternion.Concatenate( orientation , Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, rotation.Y));
-			orientation = Quaternion.Concatenate( orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, rotation.X));
+			orientation = Quaternion.Concatenate(orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, rotation.Y));
+			orientation = Quaternion.Concatenate(orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, rotation.X));
 			orientation = Quaternion.Concatenate(orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Forward, rotation.Z));
 			orientation.Normalize();
 			//orientation = Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, 0f);
-			
-			
+
+
 			model.Root.Transform = Matrix.CreateFromQuaternion(orientation) * Matrix.CreateTranslation(position);
 			model.Bones["Radar"].Transform *= Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(1.5f));
 
@@ -165,18 +165,56 @@ namespace Dreadnought {
 				model.Bones["Turret"].Transform = Matrix.CreateWorld(Vector3.Zero, front, up);
 				model.CopyAbsoluteBoneTransformsTo(transforms);
 			}
+
+			//radToTarget(model.Root.Transform, Vector3.Forward);
+			
 		}
 
+		private Vector3 faceDir(Vector3 to) {
+
+			Vector3 tt = Vector3.Transform(to, Matrix.Invert(model.Root.Transform));
+			tt.Normalize();
+			Vector3 front = tt;
+			Vector3 right = Vector3.Cross(front, Vector3.Up);
+			Vector3 up = Vector3.Cross(right, front);
+
+			front.Normalize();
+			right.Normalize();
+			up.Normalize();
+
+			Matrix m = Matrix.CreateWorld(Vector3.Zero, front, up);
+			Vector3 v = Vector3.Zero;
+
+			if(m.M21 > 0.998) { // singularity at north pole
+				v.X = (Single)Math.Atan2(m.M13, m.M33);
+				v.Y = (Single)(Math.PI / 2);
+				v.Z = 0;
+				return v;
+			}
+
+			if(m.M21 < -0.998) { // singularity at south pole
+				v.X = (Single)Math.Atan2(m.M13, m.M33);
+				v.Y = (Single)(-Math.PI / 2);
+				v.Z = 0;
+				return v;
+			}
+
+			v.X = (Single)Math.Atan2(-m.M31, m.M11) * -1.0f;
+			v.Y = (Single)Math.Atan2(-m.M23, m.M22) * -1.0f;
+			v.Z = (Single)Math.Asin(m.M21) * -1.0f;
+			return v; 
+		}
 		
+
 
 		private List<ModelMesh> walkModelTree(ModelBone modelBone) {
 			List<ModelMesh> list = new List<ModelMesh>();
 			return walkModelTree(modelBone, list);
 		}
 
-		private List<ModelMesh> walkModelTree(ModelBone start, List<ModelMesh> list ) {
+		private List<ModelMesh> walkModelTree(ModelBone start, List<ModelMesh> list) {
 			foreach(ModelBone bone in start.Children) {
-				if(bone.Children.Count > 0) walkModelTree(bone,list);
+				if(bone.Children.Count > 0) walkModelTree(bone, list);
 				foreach(ModelMesh mesh in model.Meshes) {
 					if(mesh.ParentBone == bone) {
 						list.Add(mesh);
@@ -224,8 +262,23 @@ namespace Dreadnought {
 			}
 			mesh.Draw();
 		}
-		
+
 		#endregion
+
+		public void turnToFace(Vector3 dir) {
+			Vector3 ypr = faceDir(dir);
+			Console.WriteLine(ypr);
+			if(Math.Abs(ypr.X) > 0.1) {
+				if(ypr.X > 0) turnLeft();
+				if(ypr.X < 0) turnRight();
+			} else if(Math.Abs(ypr.Z) > 0.1) {
+				if(ypr.Z < 0) turnUp();
+				if(ypr.Z > 0) turnDown();
+			} else if(Math.Abs(ypr.Y) > 0.1) {
+				if(ypr.Y > 0) rollLeft();
+				if(ypr.Y < 0) rollRight();
+			}
+		}
 
 		public void counterRotation() {
 			if(Math.Abs(rotation.Y) <= turnLimit) {
@@ -268,7 +321,7 @@ namespace Dreadnought {
 
 		#region Movment
 		public void accelerate() {
-			moment += Vector3.Transform(Vector3.Forward,orientation) * speedLimit;
+			moment += Vector3.Transform(Vector3.Forward, orientation) * speedLimit;
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.Forward);
 		}
 
@@ -315,10 +368,12 @@ namespace Dreadnought {
 
 		internal void rollLeft() {
 			rotation.Z += turnLimit;
+			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackUp);
 		}
 
 		internal void rollRight() {
 			rotation.Z -= turnLimit;
+			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontDown);
 		}
 
 		internal void strafeLeft() {

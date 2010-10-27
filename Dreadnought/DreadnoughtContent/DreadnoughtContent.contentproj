@@ -84,13 +84,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="cubemap.dds">
-      <Name>cubemap</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="EmptySpace.dds">
       <Name>EmptySpace</Name>
       <Importer>TextureImporter</Importer>
