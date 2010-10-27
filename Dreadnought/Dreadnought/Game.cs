@@ -14,8 +14,43 @@ using DreadnoughtUI;
 
 namespace Dreadnought {
 	/// <summary>
-	/// This is the main type for your game
+	/// This is the main type for Dreadnought game
 	/// </summary>
+    public class FPScounter : GameComponent {
+        private float updateInterval = 0.5f;
+        private float tLastUpdate = 1.0f;
+        private float frameCounter = 0.0f;
+        private int fps = 0;
+
+        public float FPS { get { return fps; } }
+
+        public FPScounter( Game game ) :base( game ){
+            Enabled = true;
+        }
+
+        /// <summary>
+        /// Update the fps
+        /// </summary>
+        /// <param name="gameTime">Provides a snapshot of timing values</param>
+        public override void Update( GameTime gameTime ) {
+            base.Update( gameTime );
+            float tElapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            frameCounter++;
+            tLastUpdate += tElapsed;
+            if( tLastUpdate > updateInterval ) {
+                fps = (int)(frameCounter / tLastUpdate);
+                frameCounter = 0.0f;
+                tLastUpdate -= updateInterval;
+                if( Updated != null )
+                    Updated( this, new EventArgs() );
+            }
+        }
+
+        /// <summery>
+        /// FPScounter updated event
+        /// </summary>
+        public event EventHandler<EventArgs> Updated;
+    }
 	public class Game : Microsoft.Xna.Framework.Game {
 		GraphicsDeviceManager graphics;
 		public delegate void UpdateEvent(GameTime gt);
@@ -70,6 +105,10 @@ namespace Dreadnought {
 			host.BackColorTransparent = true;
 			System.Windows.Forms.Control.FromHandle(Window.Handle).Controls.Add(host);
 			followMouse = true;
+
+            // init fps counter
+            fpsCntr = new FPScounter( this );
+            Components.Add( fpsCntr );
 		}
 
 		void mouseLeftMenu(object sender, System.Windows.Input.MouseEventArgs e) {
@@ -190,13 +229,12 @@ namespace Dreadnought {
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw(GameTime gameTime) {
 			GraphicsDevice.Clear(Color.CornflowerBlue);
-
-
-
+            
 			ship.Draw();
 			Camera.Draw();
 
 			base.Draw(gameTime);
+            this.Window.Title = "Dreadnought  (FPS: " + fpsCounter.FPS.ToString() + " )";
 		}
 	}
 }
