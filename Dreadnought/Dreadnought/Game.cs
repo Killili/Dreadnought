@@ -19,20 +19,21 @@ namespace Dreadnought {
 	/// </summary>
 	public class Game : Microsoft.Xna.Framework.Game {
 		GraphicsDeviceManager graphics;
-        
+		public delegate void UpdateEvent(GameTime gt);
+		public static event UpdateEvent GameTimeUpdate;
+
 		Ship ship;
 		private bool followMouse;
-        private int height = 768;
-        private int width = 1280;
+		private int height = 768;
+		private int width = 1280;
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
-        //FormHandle windowFormHandle;
 
 		public Game() {
 			graphics = new GraphicsDeviceManager(this);
-            graphics.PreferredBackBufferHeight = height;
-            graphics.PreferredBackBufferWidth = width;
-            graphics.ApplyChanges();
+			graphics.PreferredBackBufferHeight = height;
+			graphics.PreferredBackBufferWidth = width;
+			graphics.ApplyChanges();
 			Content.RootDirectory = "Content";
 		}
 
@@ -46,7 +47,7 @@ namespace Dreadnought {
 			// TODO: Add your initialization logic here
 
 			base.Initialize();
-            Viewport v = GraphicsDevice.Viewport;
+			Viewport v = GraphicsDevice.Viewport;
 			v.Width = Window.ClientBounds.Width - 200;
 			v.X = 200;
 			GraphicsDevice.Viewport = v;
@@ -61,10 +62,6 @@ namespace Dreadnought {
 			host.BackColorTransparent = true;
 			System.Windows.Forms.Control.FromHandle(Window.Handle).Controls.Add(host);
 			followMouse = true;
-            //windowFormHandle = System.Windows.Forms.Control.FromHandle(Window.Handle);
-            System.Windows.Forms.Control.FromHandle(Window.Handle).Width = width;
-            System.Windows.Forms.Control.FromHandle(Window.Handle).Height = height;
-            
 		}
 
 		void mouseLeftMenu(object sender, System.Windows.Input.MouseEventArgs e) {
@@ -107,9 +104,10 @@ namespace Dreadnought {
 		/// </summary>
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Update(GameTime gameTime) {
-			// Allows the game to exit
 			KeyboardState ks = Keyboard.GetState(PlayerIndex.One);
 			MouseState ms = Mouse.GetState();
+
+			if(GameTimeUpdate != null) GameTimeUpdate(gameTime);
 
 			if(ks.IsKeyDown(Keys.Escape)) {
 				this.Exit();
@@ -126,7 +124,7 @@ namespace Dreadnought {
 				ship.turnRight();
 			}
 
-			if(ks.IsKeyDown(Keys.X)){
+			if(ks.IsKeyDown(Keys.X)) {
 				ship.counterRotation();
 			}
 			if(ks.IsKeyDown(Keys.C)) {
@@ -151,9 +149,15 @@ namespace Dreadnought {
 				ship.rollRight();
 			}
 
+			if(ks.IsKeyDown(Keys.Left)) {
+				ship.strafeLeft();
+			} else if(ks.IsKeyDown(Keys.Right)) {
+				ship.strafeRight();
+			}
+
 
 			if(followMouse) {
-				Camera.Position = new Vector3(1, 1000+ms.ScrollWheelValue , 1);
+				Camera.Position = new Vector3(1, 1000 + ms.ScrollWheelValue, 1);
 			}
 			//Camera.Position = ship.Position - new Vector3(0f, -500f, -500f);
 			Camera.LookAt = ship.Position;
@@ -163,6 +167,7 @@ namespace Dreadnought {
 			// TODO: Add your update logic here
 			Camera.Update(gameTime);
 			ship.Update(gameTime);
+
 			base.Update(gameTime);
 		}
 
