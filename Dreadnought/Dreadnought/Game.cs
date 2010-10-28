@@ -16,50 +16,13 @@ namespace Dreadnought {
 	/// <summary>
 	/// This is the main type for Dreadnought game
 	/// </summary>
-	public class FPScounter : GameComponent {
-		private float updateInterval = 0.5f;
-		private float tLastUpdate = 1.0f;
-		private float frameCounter = 0.0f;
-		private int fps = 0;
-
-		public float FPS { get { return fps; } }
-
-		public FPScounter(Game game)
-			: base(game) {
-			Enabled = true;
-		}
-
-		/// <summary>
-		/// Update the fps
-		/// </summary>
-		/// <param name="gameTime">Provides a snapshot of timing values</param>
-		public override void Update(GameTime gameTime) {
-			base.Update(gameTime);
-			float tElapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
-			frameCounter++;
-			tLastUpdate += tElapsed;
-			if(tLastUpdate > updateInterval) {
-				fps = (int)(frameCounter / tLastUpdate);
-				frameCounter = 0.0f;
-				tLastUpdate -= updateInterval;
-				if(Updated != null)
-					Updated(this, new EventArgs());
-			}
-		}
-
-		/// <summery>
-		/// FPScounter updated event
-		/// </summary>
-		public event EventHandler<EventArgs> Updated;
-	}
 	public class Game : Microsoft.Xna.Framework.Game {
 		GraphicsDeviceManager graphics;
 		public delegate void UpdateEvent(GameTime gt);
 		public static event UpdateEvent GameTimeUpdate;
 
-		Ship ship;
 		private bool followMouse;
-		private FPScounter fpsCntr;
+		private Ship ship;
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
@@ -80,6 +43,7 @@ namespace Dreadnought {
 		public Game() {
 			config_init_stuff();
 			Content.RootDirectory = "Content";
+			IsMouseVisible = true;
 		}
 
 		/// <summary>
@@ -90,8 +54,6 @@ namespace Dreadnought {
 		/// </summary>
 		protected override void Initialize() {
 			// TODO: Add your initialization logic here
-
-			base.Initialize();
 			Viewport v = GraphicsDevice.Viewport;
 			v.Width = Window.ClientBounds.Width - 200;
 			v.X = 200;
@@ -109,9 +71,14 @@ namespace Dreadnought {
 			followMouse = true;
 
 			// init fps counter
-			fpsCntr = new FPScounter(this);
+			var fpsCntr = new FPSCounter(this);
 			fpsCntr.Updated += delegate { this.Window.Title = "Dreadnought  (FPS: " + fpsCntr.FPS.ToString() + " )"; };
 			Components.Add(fpsCntr);
+
+			// add ship
+			ship = new Ship(this);
+			Components.Add(ship);
+			base.Initialize();
 		}
 
 		void mouseLeftMenu(object sender, System.Windows.Input.MouseEventArgs e) {
@@ -132,12 +99,9 @@ namespace Dreadnought {
 			Camera = new Common.Camera(this);
 			Camera.Load(Content);
 			Camera.Position = new Vector3(1, 1000, 1);
-			ship = new Ship(this);
-			ship.Load(Content);
-
-
-
+			
 			// TODO: use this.Content to load your game content here
+		
 		}
 
 		/// <summary>
@@ -221,8 +185,7 @@ namespace Dreadnought {
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
 			// TODO: Add your update logic here
 			Camera.Update(gameTime);
-			ship.Update(gameTime);
-
+			
 			base.Update(gameTime);
 		}
 
@@ -233,7 +196,6 @@ namespace Dreadnought {
 		protected override void Draw(GameTime gameTime) {
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
-			ship.Draw();
 			Camera.Draw();
 
 			base.Draw(gameTime);
