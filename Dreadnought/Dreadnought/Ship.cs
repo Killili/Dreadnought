@@ -76,13 +76,12 @@ namespace Dreadnought {
 		}
 	}
 
-	class Ship {
+	class Ship : Microsoft.Xna.Framework.DrawableGameComponent {
 		#region Fileds and Constructors
 		Model model;
 		Texture2D texture;
 		Matrix[] transforms;
-		private Game game;
-
+		
 		private Vector3 moment;
 		private Vector3 position;
 
@@ -91,7 +90,7 @@ namespace Dreadnought {
 
 		private float speedLimit;
 		private float turnLimit;
-		private float helpSpeed;
+
 		private Thruster thrusters;
 		private List<ModelMesh> shipModel;
 		private List<ModelMesh> thrusterModel;
@@ -101,12 +100,13 @@ namespace Dreadnought {
 
 		public Vector3 Position { get { return position; } set { position = value; } }
 
-		public Ship(Game game) {
-			this.game = game;
+		public Ship(Game game) : base(game) {
+			Enabled = true;
 		}
+
 		#endregion
-		public void Load(ContentManager content) {
-			model = content.Load<Model>("Ship");
+		protected override void LoadContent() {
+			model = Game.Content.Load<Model>("Ship");
 			thrusters = new Thruster(this);
 			//texture = content.Load<Texture2D>("ShipTexture");
 			transforms = new Matrix[model.Bones.Count];
@@ -114,7 +114,7 @@ namespace Dreadnought {
 			position = new Vector3(0.0f);
 			speedLimit = 0.02f;
 			turnLimit = 0.0002f;
-			helpSpeed = 0.01f;
+
 			rotation = new Vector3(0.0f);
 			orientation = new Quaternion(Vector3.Up, 0f);
 
@@ -123,7 +123,7 @@ namespace Dreadnought {
 			BasicFlightHelper copilot = new BasicFlightHelper(this);
 		}
 
-		public void Update(GameTime gameTime) {
+		public override void Update(GameTime gameTime) {
 			position += moment;
 			orientation = Quaternion.Concatenate(orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, rotation.Y));
 			orientation = Quaternion.Concatenate(orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, rotation.X));
@@ -140,7 +140,7 @@ namespace Dreadnought {
 			Matrix slot = transforms[model.Bones["Slot"].Index];
 
 
-			Vector3 tt = Vector3.Transform(game.Camera.Position, Matrix.Invert(slot));
+			Vector3 tt = Vector3.Transform(Vector3.Zero, Matrix.Invert(slot));
 			tt.Normalize();
 			Matrix turret = model.Bones["Turret"].Transform;
 
@@ -226,7 +226,7 @@ namespace Dreadnought {
 
 
 		#region Draw
-		public void Draw() {
+		public override void Draw(GameTime gameTime) {
 			foreach(ModelMesh mesh in shipModel) {
 				drawMesh(mesh);
 			}
@@ -235,14 +235,13 @@ namespace Dreadnought {
 					drawThrust(mesh);
 				}
 			}
-
 		}
 
 		private void drawMesh(ModelMesh mesh) {
 			foreach(BasicEffect effect in mesh.Effects) {
 				effect.World = transforms[mesh.ParentBone.Index];
-				effect.View = game.Camera.View;
-				effect.Projection = game.Camera.Projection;
+				effect.View = ((Dreadnought.Game)Game).Camera.View;
+				effect.Projection = ((Dreadnought.Game)Game).Camera.Projection;
 				effect.DirectionalLight0.Direction = Vector3.Down;
 				effect.LightingEnabled = true;
 				effect.PreferPerPixelLighting = true;
@@ -255,8 +254,8 @@ namespace Dreadnought {
 		private void drawThrust(ModelMesh mesh) {
 			foreach(BasicEffect effect in mesh.Effects) {
 				effect.World = transforms[mesh.ParentBone.Index];
-				effect.View = game.Camera.View;
-				effect.Projection = game.Camera.Projection;
+				effect.View = ((Dreadnought.Game)Game).Camera.View;
+				effect.Projection = ((Dreadnought.Game)Game).Camera.Projection;
 				effect.LightingEnabled = false;
 				effect.EmissiveColor = new Vector3(1f, 0.5f, 0f);
 			}
