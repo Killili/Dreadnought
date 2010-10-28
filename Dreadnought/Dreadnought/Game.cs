@@ -23,6 +23,7 @@ namespace Dreadnought {
 
 		private bool followMouse;
 		private Ship ship;
+        private Grid grid;
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
@@ -63,7 +64,7 @@ namespace Dreadnought {
 			host.Child = c;
 			c.MouseEnter += new System.Windows.Input.MouseEventHandler(mouseEnteredMenu);
 			c.MouseLeave += new System.Windows.Input.MouseEventHandler(mouseLeftMenu);
-			c.Output = "TEst3";
+			c.Output = "Test3";
 			host.Location = new System.Drawing.Point(0, 0);
 			host.Size = new System.Drawing.Size(200, Window.ClientBounds.Height);
 			host.BackColorTransparent = true;
@@ -78,7 +79,11 @@ namespace Dreadnought {
 			// add ship
 			ship = new Ship(this);
 			Components.Add(ship);
-			base.Initialize();
+
+            // add grid
+            grid = new Grid( this );
+            Components.Add( grid );
+            base.Initialize();
 		}
 
 		void mouseLeftMenu(object sender, System.Windows.Input.MouseEventArgs e) {
@@ -101,7 +106,6 @@ namespace Dreadnought {
 			Camera.Position = new Vector3(1, 1000, 1);
 			
 			// TODO: use this.Content to load your game content here
-		
 		}
 
 		/// <summary>
@@ -197,7 +201,6 @@ namespace Dreadnought {
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
 			Camera.Draw();
-
 			base.Draw(gameTime);
 		}
 	}
