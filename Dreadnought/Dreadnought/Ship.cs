@@ -81,7 +81,7 @@ namespace Dreadnought {
 		Model model;
 		Texture2D texture;
 		Matrix[] transforms;
-		
+
 		private Vector3 moment;
 		private Vector3 position;
 
@@ -100,7 +100,8 @@ namespace Dreadnought {
 
 		public Vector3 Position { get { return position; } set { position = value; } }
 
-		public Ship(Game game) : base(game) {
+		public Ship(Game game)
+			: base(game) {
 			Enabled = true;
 		}
 
@@ -167,12 +168,12 @@ namespace Dreadnought {
 			}
 
 			//radToTarget(model.Root.Transform, Vector3.Forward);
-			
+
 		}
 
 		private Vector3 faceDir(Vector3 to) {
 
-			Vector3 tt = Vector3.Transform(to, Matrix.Invert(model.Root.Transform));
+			Vector3 tt = Vector3.Transform(to, Quaternion.Conjugate(orientation));
 			tt.Normalize();
 			Vector3 front = tt;
 			Vector3 right = Vector3.Cross(front, Vector3.Up);
@@ -183,6 +184,9 @@ namespace Dreadnought {
 			up.Normalize();
 
 			Matrix m = Matrix.CreateWorld(Vector3.Zero, front, up);
+			//Vector3 fo = Vector3.Transform(Vector3.Forward, Quaternion.Conjugate(orientation));
+			//Vector3 u = Vector3.Transform(Vector3.Up, Quaternion.Conjugate(orientation));
+			//Matrix m = Matrix.CreateWorld(Vector3.Zero, fo, u);
 			Vector3 v = Vector3.Zero;
 
 			if(m.M21 > 0.998) { // singularity at north pole
@@ -202,11 +206,15 @@ namespace Dreadnought {
 			v.X = (Single)Math.Atan2(-m.M31, m.M11) * -1.0f;
 			v.Y = (Single)Math.Atan2(-m.M23, m.M22) * -1.0f;
 			v.Z = (Single)Math.Asin(m.M21) * -1.0f;
-			return v; 
+			var epsilon = 0.0001;
+			if(Math.Abs(v.X) < epsilon) v.X = 0;
+			if(Math.Abs(v.Y) < epsilon) v.Y = 0;
+			if(Math.Abs(v.Z) < epsilon) v.Z = 0;
+			return v;
 		}
-		
 
 
+		#region Draw
 		private List<ModelMesh> walkModelTree(ModelBone modelBone) {
 			List<ModelMesh> list = new List<ModelMesh>();
 			return walkModelTree(modelBone, list);
@@ -225,7 +233,7 @@ namespace Dreadnought {
 		}
 
 
-		#region Draw
+
 		public override void Draw(GameTime gameTime) {
 			foreach(ModelMesh mesh in shipModel) {
 				drawMesh(mesh);
@@ -263,20 +271,83 @@ namespace Dreadnought {
 		}
 
 		#endregion
-
 		public void turnToFace(Vector3 dir) {
 			Vector3 ypr = faceDir(dir);
 			Console.WriteLine(ypr);
-			if(Math.Abs(ypr.X) > 0.1) {
-				if(ypr.X > 0) turnLeft();
-				if(ypr.X < 0) turnRight();
-			} else if(Math.Abs(ypr.Z) > 0.1) {
-				if(ypr.Z < 0) turnUp();
-				if(ypr.Z > 0) turnDown();
-			} else if(Math.Abs(ypr.Y) > 0.1) {
-				if(ypr.Y > 0) rollLeft();
-				if(ypr.Y < 0) rollRight();
+			//Console.WriteLine(rotation);
+
+			if(ypr.Z != 0) {
+				var cra = turnLimit * (int)(Math.Abs(ypr.Z) / turnLimit);
+				var rpt = Math.Abs(rotation.Z);
+				var cr = rpt > 0 ? cra / rpt : cra / turnLimit;
+				var cd = rpt / turnLimit;
+				var diff = cr - cd;
+				//Console.WriteLine(diff);
+				if(Math.Abs(diff) >= 1) {
+					if(ypr.Z < 0 && diff > 0) rollLeft();
+					if(ypr.Z > 0 && diff > 0) rollRight();
+					if(ypr.Z < 0 && diff < 0) rollRight();
+					if(ypr.Z > 0 && diff < 0) rollLeft();
+				}
+			} else {
+				if(Math.Abs(rotation.Z) <= turnLimit) {
+					rotation.Z = 0;
+				}
 			}
+			if(rotation.Z == 0) {
+				if(ypr.X != 0) {
+					var cra = turnLimit * (int)(Math.Abs(ypr.X) / turnLimit);
+					var rpt = Math.Abs(rotation.Y);
+					var cr = rpt > 0 ? cra / rpt : cra / turnLimit;
+					var cd = rpt / turnLimit;
+					var diff = cr - cd;
+					//if(Math.Abs(diff) >= 400)
+					//	diff *= -1;
+					//Console.WriteLine(diff);
+					if(Math.Abs(diff) >= 1) {
+						if(ypr.X > 0 && diff > 0) turnLeft();
+						if(ypr.X < 0 && diff > 0) turnRight();
+						if(ypr.X > 0 && diff < 0) turnRight();
+						if(ypr.X < 0 && diff < 0) turnLeft();
+					}
+				} else {
+					if(Math.Abs(rotation.Y) <= turnLimit) {
+						rotation.Y = 0;
+					}
+				}
+				if(ypr.Y != 0) {
+					var cra = turnLimit * (int)(Math.Abs(ypr.Y) / turnLimit);
+					var rpt = Math.Abs(rotation.X);
+					var cr = rpt > 0 ? cra / rpt : cra / turnLimit;
+					var cd = rpt / turnLimit;
+					var diff = cr - cd;
+					//Console.WriteLine(diff);
+					if(Math.Abs(diff) >= 1) {
+						if(ypr.Y > 0 && diff > 0) turnUp();
+						if(ypr.Y < 0 && diff > 0) turnDown();
+						if(ypr.Y > 0 && diff < 0) turnDown();
+						if(ypr.Y < 0 && diff < 0) turnUp();
+					}
+				} else {
+					if(Math.Abs(rotation.X) <= turnLimit) {
+						rotation.X = 0;
+					}
+				}
+			}
+
+
+			/*
+			if(Math.Abs(ypr.Z) > 0.01) {
+				if(Math.Abs(ypr.Z) > Math.Abs(rotation.Z)){
+						if(ypr.Z > rotation.Z) rollLeft();
+						if(ypr.Z < rotation.Z) rollRight();
+					}  else
+				 else if(Math.Abs(ypr.Y) > 0.01) {
+				if(ypr.Y > 0) turnUp();
+				if(ypr.Y < 0) turnDown();
+			}
+			*/
+
 		}
 
 		public void counterRotation() {
