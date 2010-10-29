@@ -45,7 +45,7 @@ namespace Dreadnought {
 				effect.FogEnabled = true;
 				effect.FogColor = new Vector3(0.0f);
 				effect.FogStart = 5000f;
-				effect.FogEnd = 7000f;
+				effect.FogEnd = 15000f;
 
 
         }
