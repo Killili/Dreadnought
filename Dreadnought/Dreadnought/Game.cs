@@ -195,7 +195,6 @@ namespace Dreadnought {
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
-			// TODO: Add your update logic here
 			Camera.Update(gameTime);
 			
 			base.Update(gameTime);
