@@ -3,4 +3,10 @@ Dreadnought/Dreadnought/bin
 Dreadnought/Dreadnought/obj
 Dreadnought/DreadnoughtContent/obj
 DreadnoughtUI/bin
+<<<<<<< HEAD
 DreadnoughtUI/obj
+=======
+DreadnoughtUI/obj
+.suo
+Dreadnought.suo
+>>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
