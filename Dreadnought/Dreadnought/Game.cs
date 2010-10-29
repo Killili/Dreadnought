@@ -131,14 +131,14 @@ namespace Dreadnought {
 				this.Exit();
 			}
 
-			if(ks.IsKeyDown(Keys.Up)) {
+			if(ks.IsKeyDown(Keys.W)) {
 				ship.accelerate();
-			} else if(ks.IsKeyDown(Keys.Down)) {
+			} else if(ks.IsKeyDown(Keys.S)) {
 				ship.decelerate();
 			}
-			if(ks.IsKeyDown(Keys.A)) {
+			if(ks.IsKeyDown(Keys.Left)) {
 				ship.turnLeft();
-			} else if(ks.IsKeyDown(Keys.D)) {
+			} else if(ks.IsKeyDown(Keys.Right)) {
 				ship.turnRight();
 			}
 
@@ -149,9 +149,9 @@ namespace Dreadnought {
 				ship.counterMoment();
 			}
 
-			if(ks.IsKeyDown(Keys.S)) {
+			if(ks.IsKeyDown(Keys.Down)) {
 				ship.turnUp();
-			} else if(ks.IsKeyDown(Keys.W)) {
+			} else if(ks.IsKeyDown(Keys.Up)) {
 				ship.turnDown();
 			}
 
@@ -167,9 +167,9 @@ namespace Dreadnought {
 				ship.rollRight();
 			}
 
-			if(ks.IsKeyDown(Keys.Left)) {
+			if(ks.IsKeyDown(Keys.A)) {
 				ship.strafeLeft();
-			} else if(ks.IsKeyDown(Keys.Right)) {
+			} else if(ks.IsKeyDown(Keys.D)) {
 				ship.strafeRight();
 			}
 
@@ -188,10 +188,11 @@ namespace Dreadnought {
 			if(followMouse) {
 				Camera.Position = new Vector3(1, 1000 + ms.ScrollWheelValue, 1);
 			}
-			Camera.Position = ship.Position + Vector3.Transform(Vector3.Backward, ship.Orientation) * 2000 ;
+			Camera.Up = Vector3.Transform(Vector3.Up, ship.Orientation);
+			Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 2000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
 			Vector3 gp = new Vector3((int)ship.Position.X / 5000, (int)ship.Position.Y / 5000, (int)ship.Position.Z / 5000);
 			grid.Position = new Vector3(-2.5f,-2.5f,-2.5f)+gp;
-			Camera.LookAt = ship.Position;
+			Camera.LookAt = ship.Position + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));

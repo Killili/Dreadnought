@@ -26,6 +26,7 @@ namespace Dreadnought.Common {
 		private List<VertexPositionColor> pointList;
 		private List<short> pointOrder;
 		private BasicEffect effect;
+		public Vector3 Up;
 
 		public Camera(Game game) {
 			this.game = game;
@@ -33,6 +34,7 @@ namespace Dreadnought.Common {
 			pointList = new List<VertexPositionColor>();
 			pointOrder = new List<short>();
 			LookAt = Vector3.Zero;
+			Up = Vector3.Up;
 		}
 
 
@@ -46,7 +48,7 @@ namespace Dreadnought.Common {
 
 		public void Update(GameTime gameTime) {
 			World = Matrix.CreateWorld(Position, Vector3.Forward, Vector3.Up);
-			View = Matrix.CreateLookAt(Position, LookAt, Vector3.Up);
+			View = Matrix.CreateLookAt(Position, LookAt, Up);
 			Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, game.GraphicsDevice.Viewport.AspectRatio, 1, 200000);
 
 

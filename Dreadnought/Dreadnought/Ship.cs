@@ -112,7 +112,7 @@ namespace Dreadnought {
 			transforms = new Matrix[model.Bones.Count];
 			moment = new Vector3(0.0f);
 			position = new Vector3(0.0f);
-			speedLimit = 0.02f;
+			speedLimit = 0.2f;
 			turnLimit = 0.0002f;
 
 			rotation = new Vector3(0.0f);
