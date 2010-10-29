@@ -72,9 +72,9 @@ namespace Dreadnought.Common {
 
 		public void AddDebugStar(Matrix m) {
 			Vector3 c = Vector3.Transform(Vector3.Zero, m);
-			AddDebugVector(c, c + (m.Right * 400));
-			AddDebugVector(c, c + (m.Up * 400));
-			AddDebugVector(c, c + (m.Forward * 400));
+			AddDebugVector(c, c + (m.Right * 100));
+			AddDebugVector(c, c + (m.Up * 100));
+			AddDebugVector(c, c + (m.Forward * 100));
 		}
 
 		public void Draw() {

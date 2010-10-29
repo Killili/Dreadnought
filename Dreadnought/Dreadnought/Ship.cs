@@ -81,7 +81,7 @@ namespace Dreadnought {
 		Model model;
 		Texture2D texture;
 		Matrix[] transforms;
-
+		
 		private Vector3 moment;
 		private Vector3 position;
 
@@ -100,8 +100,7 @@ namespace Dreadnought {
 
 		public Vector3 Position { get { return position; } set { position = value; } }
 
-		public Ship(Game game)
-			: base(game) {
+		public Ship(Game game) : base(game) {
 			Enabled = true;
 		}
 
@@ -174,7 +173,7 @@ namespace Dreadnought {
 		private Vector3 faceDir(Vector3 to) {
 
 			Vector3 lf = Vector3.Transform(to, Orientation);
-			Vector3 lu = Vector3.Transform(Vector3.Up, Orientation);// Vector3.Transform(Vector3.Up, orientation);
+			Vector3 lu = Vector3.Up;// Vector3.Transform(Vector3.Up, orientation);
 			lf.Normalize();
 			lu.Normalize();
 			//lf.Y *= -1;
@@ -185,15 +184,15 @@ namespace Dreadnought {
 			Vector3 up = Vector3.Cross(lr, lf);
 			up.Normalize();
 			//((Game)Game).Camera.AddDebugVector(to * 400);
-			((Game)Game).Camera.AddDebugVector(Vector3.Transform(lf * 400, Quaternion.Inverse( Orientation )));
-			((Game)Game).Camera.AddDebugVector(Vector3.Transform(lr * 400, Quaternion.Inverse(Orientation)));
-			((Game)Game).Camera.AddDebugVector(Vector3.Transform(up * 400, Quaternion.Inverse(Orientation)));
+			((Game)Game).Camera.AddDebugVector(Vector3.Transform(lf * 400, Orientation));
+			((Game)Game).Camera.AddDebugVector(Vector3.Transform(lr * 400, Orientation));
+			((Game)Game).Camera.AddDebugVector(Vector3.Transform(up * 400, Orientation));
 
 
 
 			lf.Normalize();
 			lu.Normalize();
-			//lf.Z *= -1;
+			lf.Z *= -1;
 
 			Matrix m = Matrix.CreateWorld(Vector3.Zero, lf, up);
 			//Vector3 fo = Vector3.Transform(Vector3.Forward, Quaternion.Conjugate(orientation));
@@ -215,15 +214,13 @@ namespace Dreadnought {
 				v.Z = (Single)Math.Asin(m.M21) * -1.0f;
 			}
 			//Console.WriteLine(v);
-			var epsilon = 0.002;
-			
+			var epsilon = 0.00001;
 			if(Math.Abs(v.X) < epsilon) 
 				v.X = 0;
 			if(Math.Abs(v.Y) < epsilon) 
 				v.Y = 0;
-			if(Math.Abs(v.Z) < epsilon)
+			//if(Math.Abs(v.Z) < epsilon)
 				v.Z = 0;
-			Console.WriteLine(v);
 			return v;
 		}
 
@@ -291,6 +288,29 @@ namespace Dreadnought {
 			//Console.WriteLine(rotation);
 			//Console.WriteLine(ypr);
 			
+			if(ypr.Z != 0) {
+				if(ypr.Z != 0) {
+					var cra = turnLimit * (int)(Math.Abs(ypr.Z) / turnLimit);
+					var rpt = Math.Abs(rotation.Z);
+					var cr = rpt > 0 ? cra / rpt : cra / turnLimit;
+					var cd = rpt / turnLimit;
+					var diff = cr - cd;
+					//if(Math.Abs(diff) >= 400)
+					//	diff *= -1;
+					//Console.WriteLine(diff);
+					if(Math.Abs(diff) >= 1) {
+						if(ypr.Z > 0 && diff > 0) rollRight();
+						if(ypr.Z < 0 && diff > 0) rollLeft();
+						if(ypr.Z > 0 && diff < 0) rollLeft();
+						if(ypr.Z < 0 && diff < 0) rollRight();
+						return;
+					}
+				} else {
+					if(Math.Abs(rotation.Z) <= turnLimit) {
+						rotation.Z = 0;
+					}
+				}
+			}
 			
 				if(ypr.X != 0) {
 					var cra = turnLimit * (int)(Math.Abs(ypr.X) / turnLimit);
@@ -313,51 +333,28 @@ namespace Dreadnought {
 						rotation.Y = 0;
 					}
 				}
-				
-			
-		if(ypr.Z != 0) {
-				if(ypr.Z != 0) {
-					var cra = turnLimit * (int)(Math.Abs(ypr.Z) / turnLimit);
-					var rpt = Math.Abs(rotation.Z);
+				if(ypr.Y != 0) {
+					var cra = turnLimit * (int)(Math.Abs(ypr.Y) / turnLimit);
+					var rpt = Math.Abs(rotation.X);
 					var cr = rpt > 0 ? cra / rpt : cra / turnLimit;
 					var cd = rpt / turnLimit;
 					var diff = cr - cd;
-					//if(Math.Abs(diff) >= 400)
-					//	diff *= -1;
 					//Console.WriteLine(diff);
 					if(Math.Abs(diff) >= 1) {
-						if(ypr.Z < 0 && diff > 0) rollRight();
-						if(ypr.Z > 0 && diff > 0) rollLeft();
-						if(ypr.Z < 0 && diff < 0) rollLeft();
-						if(ypr.Z > 0 && diff < 0) rollRight();
+						if(ypr.Y > 0 && diff > 0) turnUp();
+						if(ypr.Y < 0 && diff > 0) turnDown();
+						if(ypr.Y > 0 && diff < 0) turnDown();
+						if(ypr.Y < 0 && diff < 0) turnUp();
 						return;
 					}
 				} else {
-					if(Math.Abs(rotation.Z) <= turnLimit) {
-						rotation.Z = 0;
+					if(Math.Abs(rotation.X) <= turnLimit) {
+						rotation.X = 0;
 					}
 				}
-			}
+			
 
-		if(ypr.Y != 0) {
-			var cra = turnLimit * (int)(Math.Abs(ypr.Y) / turnLimit);
-			var rpt = Math.Abs(rotation.X);
-			var cr = rpt > 0 ? cra / rpt : cra / turnLimit;
-			var cd = rpt / turnLimit;
-			var diff = cr - cd;
-			//Console.WriteLine(diff);
-			if(Math.Abs(diff) >= 1) {
-				if(ypr.Y < 0 && diff > 0) turnUp();
-				if(ypr.Y > 0 && diff > 0) turnDown();
-				if(ypr.Y < 0 && diff < 0) turnDown();
-				if(ypr.Y > 0 && diff < 0) turnUp();
-				return;
-			}
-		} else {
-			if(Math.Abs(rotation.X) <= turnLimit) {
-				rotation.X = 0;
-			}
-		}
+
 			/*
 			if(Math.Abs(ypr.Z) > 0.01) {
 				if(Math.Abs(ypr.Z) > Math.Abs(rotation.Z)){
