@@ -8,56 +8,59 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Dreadnought {
     class Grid :Microsoft.Xna.Framework.DrawableGameComponent {
-        Game game;
+        
         private BasicEffect effect;
-
-        public Matrix View { get; private set; }
-        public Matrix Projection { get; private set; }
-        public Matrix World { get; private set; }
-
-        private static int points = 40;
-        private VertexPositionColor[] pointList = new VertexPositionColor[points];
-        private short[] lineListIndices;
+        private List<VertexPositionColor> pointList;
+        private List<short> pointOrder;
 
         public Grid( Game game ) : base( game ) {
-            this.game = game;
-            for( int x = 0; x < points / 2; x++ ) {
-                for( int y = 0; y < 2; y++ ) {
-                    pointList[( x * 2 ) + y] = new VertexPositionColor(
-                        // z is 490 because camera is set to 500
-                        new Vector3( x * 100 , y * 100 , 490 ), Color.White );
+            pointList = new List<VertexPositionColor>();
+            pointOrder = new List<short>();
+
+            // fill list with vertices
+            // dont try to put both inner for-llops into one
+            // this would change the vertices order!
+            for( int z = 0; z <= 10; z++ ) {
+                for( int i = 0; i <= 3; i++ ) {
+                    pointList.Add( new VertexPositionColor( new Vector3( i, 0, z ), Color.Blue ) );
+                    pointList.Add( new VertexPositionColor( new Vector3( i, 3, z ), Color.Blue ) );
+                }
+                for( int i = 0; i <= 3; i++ ) {
+                    pointList.Add( new VertexPositionColor( new Vector3( 0, i, z ), Color.Blue ) );
+                    pointList.Add( new VertexPositionColor( new Vector3( 3, i, z ), Color.Blue ) );
                 }
             }
-            // Initialize an array of indices of type short.
-            // Populate the array with references to indices in the vertex buffer
-            lineListIndices = new short[( points * 2 ) - 2];
-            for( int i = 0; i < points - 1; i++ ) {
-                lineListIndices[i * 2] = (short)( i );
-                lineListIndices[( i * 2 ) + 1] = (short)( i + 1 );
+
+            // set vertices draw order
+            for( short i = 0; i < pointList.Count; i++ ) {
+                pointOrder.Add( i );
             }
         }
 
-        public void Load() {
-            effect = new BasicEffect( game.GraphicsDevice );
+        protected override void LoadContent() {
+            effect = new BasicEffect( Game.GraphicsDevice );
             effect.VertexColorEnabled = true;
-            effect.World = game.World;
+            effect.LightingEnabled = false;
         }
 
         public override void Update( GameTime gameTime ) {
-
+            effect.View = ( (Game)Game ).Camera.View;
+            effect.Projection = ( (Game)Game ).Camera.Projection;
+            effect.World = Matrix.CreateWorld( Vector3.Zero, Vector3.Forward, Vector3.Up ) * Matrix.CreateTranslation( 0, -5, 0 ) * Matrix.CreateScale( 3000.0f );
+            base.Update( gameTime );
         }
 
         public override void Draw( GameTime gameTime ) {
             foreach( EffectPass pass in effect.CurrentTechnique.Passes ) {
                 pass.Apply();
-                game.GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>( 
+                GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>( 
                     PrimitiveType.LineList,
                     pointList.ToArray(),
                     0,
-                    points,
-                    lineListIndices,
+                    pointList.Count,
+                    pointOrder.ToArray(),
                     0,
-                    points-1 );
+                    pointOrder.Count / 2 );
             }
         }
     }

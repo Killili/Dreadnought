@@ -182,7 +182,7 @@ namespace Dreadnought {
 			if(followMouse) {
 				Camera.Position = new Vector3(1, 1000 + ms.ScrollWheelValue, 1);
 			}
-			//Camera.Position = ship.Position - new Vector3(0f, -500f, -500f);
+			Camera.Position = ship.Position - ( new Vector3(0.0f, -0.5f, 1.0f) * 2000.0f );
 			Camera.LookAt = ship.Position;
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
