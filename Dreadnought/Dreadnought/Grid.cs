@@ -7,58 +7,56 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Dreadnought {
-    class Grid :Microsoft.Xna.Framework.DrawableGameComponent {
-        Game game;
-        private BasicEffect effect;
+	class Grid : Microsoft.Xna.Framework.DrawableGameComponent {
 
-        public Matrix View { get; private set; }
-        public Matrix Projection { get; private set; }
-        public Matrix World { get; private set; }
+		private BasicEffect effect;
+		private List<VertexPositionColor> pointList;
+		private List<short> pointOrder;
 
-        private static int points = 40;
-        private VertexPositionColor[] pointList = new VertexPositionColor[points];
-        private short[] lineListIndices;
+		public Grid(Game game)
+			: base(game) {
+			pointList = new List<VertexPositionColor>();
+			pointOrder = new List<short>();
+			pointList.Add(new VertexPositionColor(new Vector3(0, 0, 0), Color.White));
+			pointList.Add(new VertexPositionColor(new Vector3(0, 0, 100), Color.White));
+			pointList.Add(new VertexPositionColor(new Vector3(100, 0, 0), Color.White));
+			pointList.Add(new VertexPositionColor(new Vector3(100, 0 , 100), Color.White));
+			pointOrder.Add(0);
+			pointOrder.Add(1);
+			pointOrder.Add(0);
+			pointOrder.Add(2);
+			pointOrder.Add(3);
+			pointOrder.Add(2);
+			pointOrder.Add(3);
+			pointOrder.Add(1);
+		}
 
-        public Grid( Game game ) : base( game ) {
-            this.game = game;
-            for( int x = 0; x < points / 2; x++ ) {
-                for( int y = 0; y < 2; y++ ) {
-                    pointList[( x * 2 ) + y] = new VertexPositionColor(
-                        // z is 490 because camera is set to 500
-                        new Vector3( x * 100 , y * 100 , 490 ), Color.White );
-                }
-            }
-            // Initialize an array of indices of type short.
-            // Populate the array with references to indices in the vertex buffer
-            lineListIndices = new short[( points * 2 ) - 2];
-            for( int i = 0; i < points - 1; i++ ) {
-                lineListIndices[i * 2] = (short)( i );
-                lineListIndices[( i * 2 ) + 1] = (short)( i + 1 );
-            }
-        }
+		protected override void LoadContent() {
+			effect = new BasicEffect(Game.GraphicsDevice);
+			effect.VertexColorEnabled = true;
+			effect.LightingEnabled = false;
+		}
 
-        public void Load() {
-            effect = new BasicEffect( game.GraphicsDevice );
-            effect.VertexColorEnabled = true;
-            effect.World = game.World;
-        }
+		public override void Update(GameTime gameTime) {
+			effect.View = ((Game)Game).Camera.View;
+			effect.Projection = ((Game)Game).Camera.Projection;
+			effect.World = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
+			base.Update(gameTime);
+		}
 
-        public override void Update( GameTime gameTime ) {
-
-        }
-
-        public override void Draw( GameTime gameTime ) {
-            foreach( EffectPass pass in effect.CurrentTechnique.Passes ) {
-                pass.Apply();
-                game.GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>( 
-                    PrimitiveType.LineList,
-                    pointList.ToArray(),
-                    0,
-                    points,
-                    lineListIndices,
-                    0,
-                    points-1 );
-            }
-        }
-    }
+		public override void Draw(GameTime gameTime) {
+			foreach(EffectPass pass in effect.CurrentTechnique.Passes) {
+				pass.Apply();
+				GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>(
+					 PrimitiveType.LineList,
+					 pointList.ToArray(),
+					 0,  // vertex buffer offset to add to each element of the index buffer
+					 pointList.Count,  // number of vertices in pointList
+					 pointOrder.ToArray(),  // the index buffer
+					 0,  // first index element to read
+					 pointOrder.Count / 2  // number of primitives to draw
+				);
+			}
+		}
+	}
 }

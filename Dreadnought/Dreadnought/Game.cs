@@ -78,7 +78,7 @@ namespace Dreadnought {
 
 			// add ship
 			ship = new Ship(this);
-			Components.Add(ship);
+			//Components.Add(ship);
 
             // add grid
             grid = new Grid( this );
@@ -182,8 +182,8 @@ namespace Dreadnought {
 			if(followMouse) {
 				Camera.Position = new Vector3(1, 1000 + ms.ScrollWheelValue, 1);
 			}
-			Camera.Position = ship.Position - new Vector3(0f, -500f, 1000f);
-			Camera.LookAt = ship.Position;
+			Camera.Position = ship.Position - new Vector3(1000f, -1000f, 1000f);
+			//Camera.LookAt = ship.Position;
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
