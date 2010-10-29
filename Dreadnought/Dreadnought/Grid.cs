@@ -12,6 +12,7 @@ namespace Dreadnought {
         private BasicEffect effect;
         private List<VertexPositionColor> pointList;
         private List<short> pointOrder;
+		  public Vector3 Position;
 
         public Grid( Game game ) : base( game ) {
             pointList = new List<VertexPositionColor>();
@@ -20,14 +21,14 @@ namespace Dreadnought {
             // fill list with vertices
             // dont try to put both inner for-llops into one
             // this would change the vertices order!
-            for( int z = 0; z <= 10; z++ ) {
-                for( int i = 0; i <= 3; i++ ) {
-                    pointList.Add( new VertexPositionColor( new Vector3( i, 0, z ), Color.Blue ) );
-                    pointList.Add( new VertexPositionColor( new Vector3( i, 3, z ), Color.Blue ) );
+            for( int z = 0; z <= 5; z++ ) {
+                for( int i = 0; i <= 5; i++ ) {
+                    pointList.Add( new VertexPositionColor( new Vector3( i, 0, z ), Color.DarkBlue ) );
+						  pointList.Add(new VertexPositionColor(new Vector3(i, 5, z), Color.DarkBlue));
                 }
-                for( int i = 0; i <= 3; i++ ) {
-                    pointList.Add( new VertexPositionColor( new Vector3( 0, i, z ), Color.Blue ) );
-                    pointList.Add( new VertexPositionColor( new Vector3( 3, i, z ), Color.Blue ) );
+                for( int i = 0; i <= 5; i++ ) {
+						 pointList.Add(new VertexPositionColor(new Vector3(0, i, z), Color.DarkBlue));
+						 pointList.Add(new VertexPositionColor(new Vector3(5, i, z), Color.DarkBlue));
                 }
             }
 
@@ -41,12 +42,18 @@ namespace Dreadnought {
             effect = new BasicEffect( Game.GraphicsDevice );
             effect.VertexColorEnabled = true;
             effect.LightingEnabled = false;
+				effect.FogEnabled = true;
+				effect.FogColor = new Vector3(0.0f);
+				effect.FogStart = 5000f;
+				effect.FogEnd = 7000f;
+
+
         }
 
         public override void Update( GameTime gameTime ) {
             effect.View = ( (Game)Game ).Camera.View;
             effect.Projection = ( (Game)Game ).Camera.Projection;
-            effect.World = Matrix.CreateWorld( Vector3.Zero, Vector3.Forward, Vector3.Up ) * Matrix.CreateTranslation( 0, -5, 0 ) * Matrix.CreateScale( 3000.0f );
+            effect.World = Matrix.CreateWorld( Vector3.Zero, Vector3.Forward, Vector3.Up )* Matrix.CreateTranslation(Position) * Matrix.CreateScale( 5000.0f );
             base.Update( gameTime );
         }
 
