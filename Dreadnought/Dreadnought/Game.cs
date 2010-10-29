@@ -23,11 +23,7 @@ namespace Dreadnought {
 
 		private bool followMouse;
 		private Ship ship;
-<<<<<<< HEAD
         private Grid grid;
-=======
-		private Grid grid;
->>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
@@ -84,17 +80,10 @@ namespace Dreadnought {
 			ship = new Ship(this);
 			Components.Add(ship);
 
-<<<<<<< HEAD
             // add grid
             grid = new Grid( this );
             Components.Add( grid );
             base.Initialize();
-=======
-			// add grid
-			grid = new Grid(this);
-			Components.Add(grid);
-			base.Initialize();
->>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 		}
 
 		void mouseLeftMenu(object sender, System.Windows.Input.MouseEventArgs e) {
@@ -115,11 +104,7 @@ namespace Dreadnought {
 			Camera = new Common.Camera(this);
 			Camera.Load(Content);
 			Camera.Position = new Vector3(1, 1000, 1);
-<<<<<<< HEAD
 			
-=======
-
->>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 			// TODO: use this.Content to load your game content here
 		}
 
@@ -193,37 +178,18 @@ namespace Dreadnought {
 			} else if(ks.IsKeyDown(Keys.J)) {
 				ship.turnToFace(Vector3.Left);
 			}
-<<<<<<< HEAD
-=======
-			if(ks.IsKeyDown(Keys.I)) {
-				ship.turnToFace(Vector3.Forward);
-			} else if(ks.IsKeyDown(Keys.K)) {
-				ship.turnToFace(Vector3.Backward);
-			}
->>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 
 			if(followMouse) {
 				Camera.Position = new Vector3(1, 1000 + ms.ScrollWheelValue, 1);
 			}
-<<<<<<< HEAD
 			Camera.Position = ship.Position - ( new Vector3(0.0f, -0.5f, 1.0f) * 2000.0f );
 			Camera.LookAt = ship.Position;
-=======
-			Camera.Position = Vector3.Transform(Vector3.Backward + Vector3.Up , ship.Orientation) * 1000;
-			//Camera.Position = ship.Position - new Vector3(1000f, -1000f, 1000f);
-			Camera.LookAt = ship.Position;
-			Camera.AddDebugStar(Matrix.CreateWorld(new Vector3(-500, 0, 0), Vector3.Forward, Vector3.Up));
->>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
 			// TODO: Add your update logic here
 			Camera.Update(gameTime);
-<<<<<<< HEAD
 			
-=======
-
->>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 			base.Update(gameTime);
 		}
 

@@ -14,11 +14,7 @@ namespace Dreadnought.Common {
 	/// <summary>
 	/// This is a game component that implements IUpdateable.
 	/// </summary>
-<<<<<<< HEAD
 	public class FPSCounter : Microsoft.Xna.Framework.DrawableGameComponent {
-=======
-	public class FPSCounter : Microsoft.Xna.Framework.GameComponent {
->>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 		private float updateInterval = 0.5f;
 		private float tLastUpdate = 1.0f;
 		private float frameCounter = 0.0f;
@@ -47,21 +43,14 @@ namespace Dreadnought.Common {
 			base.Initialize();
 		}
 
-<<<<<<< HEAD
         public override void Update( GameTime gameTime ) {
              // just a dummy
         }
-=======
->>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 		/// <summary>
 		/// Allows the game component to update itself.
 		/// </summary>
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
-<<<<<<< HEAD
 		public override void Draw(GameTime gameTime) {
-=======
-		public override void Update(GameTime gameTime) {
->>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 			// TODO: Add your update code here
 			base.Update(gameTime);
 			float tElapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
