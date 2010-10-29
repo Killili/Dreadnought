@@ -23,7 +23,7 @@ namespace Dreadnought {
 
 		private bool followMouse;
 		private Ship ship;
-        private Grid grid;
+		private Grid grid;
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
@@ -78,12 +78,12 @@ namespace Dreadnought {
 
 			// add ship
 			ship = new Ship(this);
-			//Components.Add(ship);
+			Components.Add(ship);
 
-            // add grid
-            grid = new Grid( this );
-            Components.Add( grid );
-            base.Initialize();
+			// add grid
+			grid = new Grid(this);
+			Components.Add(grid);
+			base.Initialize();
 		}
 
 		void mouseLeftMenu(object sender, System.Windows.Input.MouseEventArgs e) {
@@ -104,7 +104,7 @@ namespace Dreadnought {
 			Camera = new Common.Camera(this);
 			Camera.Load(Content);
 			Camera.Position = new Vector3(1, 1000, 1);
-			
+
 			// TODO: use this.Content to load your game content here
 		}
 
@@ -178,18 +178,25 @@ namespace Dreadnought {
 			} else if(ks.IsKeyDown(Keys.J)) {
 				ship.turnToFace(Vector3.Left);
 			}
+			if(ks.IsKeyDown(Keys.I)) {
+				ship.turnToFace(Vector3.Forward);
+			} else if(ks.IsKeyDown(Keys.K)) {
+				ship.turnToFace(Vector3.Backward);
+			}
 
 			if(followMouse) {
 				Camera.Position = new Vector3(1, 1000 + ms.ScrollWheelValue, 1);
 			}
-			Camera.Position = ship.Position - new Vector3(1000f, -1000f, 1000f);
-			//Camera.LookAt = ship.Position;
+			Camera.Position = Vector3.Transform(Vector3.Backward + Vector3.Up , ship.Orientation) * 1000;
+			//Camera.Position = ship.Position - new Vector3(1000f, -1000f, 1000f);
+			Camera.LookAt = ship.Position;
+			Camera.AddDebugStar(Matrix.CreateWorld(new Vector3(-500, 0, 0), Vector3.Forward, Vector3.Up));
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
 			// TODO: Add your update logic here
 			Camera.Update(gameTime);
-			
+
 			base.Update(gameTime);
 		}
 
