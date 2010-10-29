@@ -184,6 +184,12 @@ namespace Dreadnought {
 				ship.turnToFace(Vector3.Backward);
 			}
 
+			if(ks.IsKeyDown(Keys.U)) {
+				ship.turnToFace(Vector3.Normalize( new Vector3(1,1,1) ) );
+			} else if(ks.IsKeyDown(Keys.O)) {
+				ship.turnToFace(Vector3.Backward);
+			}
+
 			if(followMouse) {
 				Camera.Position = new Vector3(1, 1000 + ms.ScrollWheelValue, 1);
 			}
