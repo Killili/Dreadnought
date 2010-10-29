@@ -12,7 +12,7 @@ namespace Dreadnought {
         private BasicEffect effect;
         private List<VertexPositionColor> pointList;
         private List<short> pointOrder;
-		  public Vector3 Position;
+		public Vector3 Position;
 
         public Grid( Game game ) : base( game ) {
             pointList = new List<VertexPositionColor>();
@@ -24,11 +24,11 @@ namespace Dreadnought {
             for( int z = 0; z <= 5; z++ ) {
                 for( int i = 0; i <= 5; i++ ) {
                     pointList.Add( new VertexPositionColor( new Vector3( i, 0, z ), Color.DarkBlue ) );
-						  pointList.Add(new VertexPositionColor(new Vector3(i, 5, z), Color.DarkBlue));
+					pointList.Add(new VertexPositionColor(new Vector3(i, 5, z), Color.DarkBlue));
                 }
                 for( int i = 0; i <= 5; i++ ) {
-						 pointList.Add(new VertexPositionColor(new Vector3(0, i, z), Color.DarkBlue));
-						 pointList.Add(new VertexPositionColor(new Vector3(5, i, z), Color.DarkBlue));
+					pointList.Add(new VertexPositionColor(new Vector3(0, i, z), Color.DarkBlue));
+					pointList.Add(new VertexPositionColor(new Vector3(5, i, z), Color.DarkBlue));
                 }
             }
 
@@ -42,10 +42,10 @@ namespace Dreadnought {
             effect = new BasicEffect( Game.GraphicsDevice );
             effect.VertexColorEnabled = true;
             effect.LightingEnabled = false;
-				effect.FogEnabled = true;
-				effect.FogColor = new Vector3(0.0f);
-				effect.FogStart = 5000f;
-				effect.FogEnd = 7000f;
+			effect.FogEnabled = true;
+			effect.FogColor = new Vector3(0.0f);
+			effect.FogStart = 10000f;
+			effect.FogEnd = 15000f;
 
 
         }
