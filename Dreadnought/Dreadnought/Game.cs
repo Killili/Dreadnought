@@ -38,6 +38,7 @@ namespace Dreadnought {
 			graphics.PreferredBackBufferHeight = 768;
 			graphics.PreferredBackBufferWidth = 200 + 1024;
 			graphics.ApplyChanges();
+			Mouse.WindowHandle = Window.Handle;
 		}
 		#endregion
 
@@ -186,11 +187,16 @@ namespace Dreadnought {
 			}
 
 			if(followMouse) {
-				Camera.Position = new Vector3(1, 1000 + ms.ScrollWheelValue, 1);
+				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View, World);
+				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View, World);
+				Vector3 dir = Vector3.Normalize(pos2 - pos1);
+
+				Camera.AddDebugVector(pos1,pos2);
 			}
+
 			Camera.Up = Vector3.Transform(Vector3.Up, ship.Orientation);
 			Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 2000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
-			Vector3 gp = new Vector3((int)ship.Position.X / 5000, (int)ship.Position.Y / 5000, (int)ship.Position.Z / 5000);
+			Vector3 gp = new Vector3((float)Math.Round(ship.Position.X / 5000), (float)Math.Round(ship.Position.Y / 5000), (float)Math.Round(ship.Position.Z / 5000));
 			grid.Position = new Vector3(-2.5f,-2.5f,-2.5f)+gp;
 			Camera.LookAt = ship.Position + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
 

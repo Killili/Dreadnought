@@ -47,11 +47,11 @@ namespace Dreadnought.Common {
 		}
 
 		public void Update(GameTime gameTime) {
-			World = Matrix.CreateWorld(Position, Vector3.Forward, Vector3.Up);
+			World = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
 			View = Matrix.CreateLookAt(Position, LookAt, Up);
 			Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, game.GraphicsDevice.Viewport.AspectRatio, 1, 200000);
 
-
+			effect.World = World;
 			effect.View = View;
 			effect.Projection = Projection;
 
