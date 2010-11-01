@@ -24,16 +24,19 @@ namespace Dreadnought {
 		private bool followMouse;
 		private Ship ship;
         private Grid grid;
+		  public Sidemenu UI;
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
 
 		#region Config and Windowsstuff
 		private void config_init_stuff() {
+#if BLA
 			AppDomain.CurrentDomain.UnhandledException += (s, e) => {
 				Exception ex = (Exception)e.ExceptionObject;
 				System.Windows.MessageBox.Show(ex.Message);
 			};
+#endif
 			graphics = new GraphicsDeviceManager(this);
 			graphics.PreferredBackBufferHeight = 768;
 			graphics.PreferredBackBufferWidth = 200 + 1024;
@@ -61,11 +64,11 @@ namespace Dreadnought {
 			v.X = 200;
 			GraphicsDevice.Viewport = v;
 			ElementHost host = new ElementHost();
-			Sidemenu c = new Sidemenu();
-			host.Child = c;
-			c.MouseEnter += new System.Windows.Input.MouseEventHandler(mouseEnteredMenu);
-			c.MouseLeave += new System.Windows.Input.MouseEventHandler(mouseLeftMenu);
-			c.Output = "Test3";
+			UI = new Sidemenu();
+			host.Child = UI;
+			UI.MouseEnter += new System.Windows.Input.MouseEventHandler(mouseEnteredMenu);
+			UI.MouseLeave += new System.Windows.Input.MouseEventHandler(mouseLeftMenu);
+			
 			host.Location = new System.Drawing.Point(0, 0);
 			host.Size = new System.Drawing.Size(200, Window.ClientBounds.Height);
 			host.BackColorTransparent = true;
@@ -180,18 +183,25 @@ namespace Dreadnought {
 				ship.turnToFace(Vector3.Left);
 			}
 
-			if(ks.IsKeyDown(Keys.U)) {
-				ship.turnToFace(Vector3.Normalize( new Vector3(1,1,1) ) );
-			} else if(ks.IsKeyDown(Keys.O)) {
+			if(ks.IsKeyDown(Keys.I)) {
+				ship.turnToFace(Vector3.Forward);
+			} else if(ks.IsKeyDown(Keys.K)) {
 				ship.turnToFace(Vector3.Backward);
 			}
 
-			if(followMouse) {
-				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View, World);
-				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View, World);
-				Vector3 dir = Vector3.Normalize(pos2 - pos1);
+			if(ks.IsKeyDown(Keys.U)) {
+				ship.turnToFace(Vector3.Normalize( new Vector3(-1,1,-1) ) );
+			} else if(ks.IsKeyDown(Keys.O)) {
+				ship.turnToFace(Vector3.Normalize( new Vector3(1,1,-1)));
+			}
 
-				Camera.AddDebugVector(pos1,pos2);
+			if(followMouse) {
+				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View, Camera.World);
+				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View, Camera.World);
+				Vector3 dir = Vector3.Normalize(pos2 - pos1);
+				//Camera.AddDebugVector(pos2);
+				Camera.AddDebugVector(ship.Position,pos2);
+				//Camera.AddDebugVector(pos1,pos2);
 			}
 
 			Camera.Up = Vector3.Transform(Vector3.Up, ship.Orientation);

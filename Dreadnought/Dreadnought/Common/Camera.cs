@@ -51,7 +51,7 @@ namespace Dreadnought.Common {
 			View = Matrix.CreateLookAt(Position, LookAt, Up);
 			Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, game.GraphicsDevice.Viewport.AspectRatio, 1, 200000);
 
-			effect.World = World;
+			effect.World = Matrix.CreateWorld(Vector3.Zero,Vector3.Forward,Vector3.Up);
 			effect.View = View;
 			effect.Projection = Projection;
 
@@ -74,9 +74,9 @@ namespace Dreadnought.Common {
 
 		public void AddDebugStar(Matrix m) {
 			Vector3 c = Vector3.Transform(Vector3.Zero, m);
-			AddDebugVector(c, c + (m.Right * 100));
-			AddDebugVector(c, c + (m.Up * 100));
-			AddDebugVector(c, c + (m.Forward * 100));
+			AddDebugVector(c, c + (m.Right * 400));
+			AddDebugVector(c, c + (m.Up * 400));
+			AddDebugVector(c, c + (m.Forward * 400));
 		}
 
 		public void Draw() {

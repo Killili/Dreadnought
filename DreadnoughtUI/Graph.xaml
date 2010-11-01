@@ -1,0 +1,35 @@
+﻿<Window x:Class="DreadnoughtUI.Graph"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Graph" Height="403" Width="817" xmlns:charting="clr-namespace:System.Windows.Controls.DataVisualization.Charting;assembly=System.Windows.Controls.DataVisualization.Toolkit" xmlns:visualizationToolkit="clr-namespace:System.Windows.Controls.DataVisualization;assembly=System.Windows.Controls.DataVisualization.Toolkit">
+    <Window.Resources>
+        <Style x:Key="DataPointStyle" TargetType="charting:LineDataPoint">
+            <Setter Property="Background" Value="#0077CC" />
+            <Setter Property="BorderBrush" Value="White"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="charting:LineDataPoint">
+                        <Grid x:Name="Root" Opacity="1">
+                            <ToolTipService.ToolTip>
+                                <StackPanel Margin="3">
+                                    <Label Content="{TemplateBinding IndependentValue}"/>
+                                    <Label Content="{TemplateBinding DependentValue}"/>
+                                </StackPanel>
+                            </ToolTipService.ToolTip>
+                            <Ellipse Height="2" Width="2" StrokeThickness="{TemplateBinding BorderThickness}" Stroke="{TemplateBinding BorderBrush}" Fill="{TemplateBinding Background}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+        <Grid>
+            <charting:Chart Name="chart" Title="Chart Title">
+            </charting:Chart>
+    </Grid>
+    
+    
+
+</Window>

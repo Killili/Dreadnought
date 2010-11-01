@@ -18,13 +18,20 @@ namespace DreadnoughtUI {
 	/// </summary>
 	public partial class Sidemenu : UserControl {
 		public string Output { get; set; }
+
+		public Graph Graph;
+
 		public Sidemenu() {
 			InitializeComponent();
 			Output = "";
 		}
 
 		private void button1_Click(object sender, RoutedEventArgs e) {
-			Console.WriteLine(Output);
+			if(Graph == null) {
+				Graph = new Graph();
+				//Graph.Chart.DataContext = new KeyValuePair<int, int>[] { new KeyValuePair<int, int>(0, 0) };
+			}
+			Graph.Show();
 		}
 	}
 }
