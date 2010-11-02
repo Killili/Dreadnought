@@ -47,7 +47,10 @@
 		um zB 10% des letzten wertes (1.stufe: 110%, 2.stufe 121%, 3.stufe:133%....)
 		1.stufe = 1 jammer, 2.stufe = 2 jammer
 		so können auch mehrere kleine schiffe ein großes vor dem flüchten stoppen
-		
+	alle attribute aller teile (panzerung, waffen, ...) haben eine range an werten
+		unique items???
+
+
 ##prologe
 Das Universum befindet sich in einem post-technischem Zeitalter. Alles technologische ist
 bereits entiwckelt worden und Forscher gehören fast der Vergangenheit an. Das, was einst
