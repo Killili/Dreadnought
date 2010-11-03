@@ -13,25 +13,32 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace DreadnoughtUI {
+	public class OrderEventArgs : EventArgs {
+		public double Speed;
+		public OrderEventArgs(double speed) {
+			this.Speed = speed;
+		}
+	}
 	/// <summary>
 	/// Interaction logic for UserControl1.xaml
 	/// </summary>
 	public partial class Sidemenu : UserControl {
-		public string Output { get; set; }
-
+		
 		public Graph Graph;
+
+		public event EventHandler<OrderEventArgs> Orders;
 
 		public Sidemenu() {
 			InitializeComponent();
-			Output = "";
 		}
 
 		private void button1_Click(object sender, RoutedEventArgs e) {
-			if(Graph == null) {
-				Graph = new Graph();
-				//Graph.Chart.DataContext = new KeyValuePair<int, int>[] { new KeyValuePair<int, int>(0, 0) };
-			}
+			Graph = new Graph();
 			Graph.Show();
+		}
+
+		private void slider1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
+			Orders(this, new OrderEventArgs(slider1.Value));
 		}
 	}
 }

@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="400" d:DesignWidth="200">
+             d:DesignHeight="600" d:DesignWidth="200">
     <UserControl.Background>
         <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
             <GradientStop Color="Black" Offset="1" />
@@ -13,5 +13,6 @@
     </UserControl.Background>
     <Grid>
         <Button Content="Button" Height="28" HorizontalAlignment="Left" Margin="12,12,0,0" Name="button1" VerticalAlignment="Top" Width="149" Click="button1_Click" />
+        <Slider Height="23" HorizontalAlignment="Left" Margin="12,46,0,0" Name="slider1" VerticalAlignment="Top" Width="149" ValueChanged="slider1_ValueChanged" Maximum="100" />
     </Grid>
 </UserControl>

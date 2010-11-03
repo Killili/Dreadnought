@@ -21,10 +21,10 @@ namespace Dreadnought {
 		public delegate void UpdateEvent(GameTime gt);
 		public static event UpdateEvent GameTimeUpdate;
 
-		private bool followMouse;
 		private Ship ship;
-        private Grid grid;
-		  public Sidemenu UI;
+		private Grid grid;
+		public Sidemenu UI;
+		private Nullable<Vector3> faceDir;
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
@@ -66,15 +66,11 @@ namespace Dreadnought {
 			ElementHost host = new ElementHost();
 			UI = new Sidemenu();
 			host.Child = UI;
-			UI.MouseEnter += new System.Windows.Input.MouseEventHandler(mouseEnteredMenu);
-			UI.MouseLeave += new System.Windows.Input.MouseEventHandler(mouseLeftMenu);
 			
 			host.Location = new System.Drawing.Point(0, 0);
 			host.Size = new System.Drawing.Size(200, Window.ClientBounds.Height);
 			host.BackColorTransparent = true;
 			System.Windows.Forms.Control.FromHandle(Window.Handle).Controls.Add(host);
-			followMouse = true;
-
 			// init fps counter
 			var fpsCntr = new FPSCounter(this);
 			fpsCntr.Updated += delegate { this.Window.Title = "Dreadnought  (FPS: " + fpsCntr.FPS.ToString() + " )"; };
@@ -84,18 +80,10 @@ namespace Dreadnought {
 			ship = new Ship(this);
 			Components.Add(ship);
 
-            // add grid
-            grid = new Grid( this );
-            Components.Add( grid );
-            base.Initialize();
-		}
-
-		void mouseLeftMenu(object sender, System.Windows.Input.MouseEventArgs e) {
-			followMouse = true;
-		}
-
-		void mouseEnteredMenu(object sender, System.Windows.Input.MouseEventArgs e) {
-			followMouse = false;
+			// add grid
+			grid = new Grid(this);
+			Components.Add(grid);
+			base.Initialize();
 		}
 
 		/// <summary>
@@ -108,7 +96,7 @@ namespace Dreadnought {
 			Camera = new Common.Camera(this);
 			Camera.Load(Content);
 			Camera.Position = new Vector3(1, 1000, 1);
-			
+
 			// TODO: use this.Content to load your game content here
 		}
 
@@ -183,37 +171,34 @@ namespace Dreadnought {
 				ship.turnToFace(Vector3.Left);
 			}
 
-			if(ks.IsKeyDown(Keys.I)) {
-				ship.turnToFace(Vector3.Forward);
-			} else if(ks.IsKeyDown(Keys.K)) {
-				ship.turnToFace(Vector3.Backward);
+			if(faceDir != null) {
+				if(ship.turnToFace(faceDir.Value) == 3) {
+					faceDir = null;
+				}
 			}
 
-			if(ks.IsKeyDown(Keys.U)) {
-				ship.turnToFace(Vector3.Normalize( new Vector3(-1,1,-1) ) );
-			} else if(ks.IsKeyDown(Keys.O)) {
-				ship.turnToFace(Vector3.Normalize( new Vector3(1,1,-1)));
-			}
+			if(ks.IsKeyDown(Keys.P)) ship.PushDebugPoints();
 
-			if(followMouse) {
+			if(ms.LeftButton == ButtonState.Pressed && GraphicsDevice.Viewport.Bounds.Contains(ms.X,ms.Y)) {
 				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View, Camera.World);
 				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View, Camera.World);
-				Vector3 dir = Vector3.Normalize(pos2 - pos1);
+				faceDir = Vector3.Normalize(pos2 - ship.Position);
 				//Camera.AddDebugVector(pos2);
-				Camera.AddDebugVector(ship.Position,pos2);
+				//Camera.AddDebugVector(ship.Position,pos2);
 				//Camera.AddDebugVector(pos1,pos2);
 			}
 
 			Camera.Up = Vector3.Transform(Vector3.Up, ship.Orientation);
-			Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 2000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
-            Vector3 gp = new Vector3( (float)Math.Round( ship.Position.X / grid.Scale ), (float)Math.Round( ship.Position.Y / grid.Scale ), (float)Math.Round( ship.Position.Z / grid.Scale ) );
-            grid.Position = new Vector3( -( grid.Size / 2f ), -( grid.Size / 2f ), -( grid.Size / 2f ) ) + gp;
+			Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 3000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
+			//Camera.Position = (Vector3.Up + Vector3.Backward) * 1000;
+			Vector3 gp = new Vector3((float)Math.Round(ship.Position.X / grid.Scale), (float)Math.Round(ship.Position.Y / grid.Scale), (float)Math.Round(ship.Position.Z / grid.Scale));
+			grid.Position = new Vector3(-(grid.Size / 2f), -(grid.Size / 2f), -(grid.Size / 2f)) + gp;
 			Camera.LookAt = ship.Position + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
 			Camera.Update(gameTime);
-			
+
 			base.Update(gameTime);
 		}
 

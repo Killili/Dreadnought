@@ -43,17 +43,21 @@ namespace Dreadnought {
 		}
 	}
 
-	class BasicFlightHelper {
+	class BasicFlightHelper : GameComponent {
 		private TimeSpan lastUpdate;
 		private TimeSpan timeout;
 		private Ship ship;
 		private bool ignoreEvents;
-		public BasicFlightHelper(Ship s) {
-			ship = s;
-			Game.GameTimeUpdate += timerUpdate;
+		private double desiredSpeed;
+
+		public BasicFlightHelper(Game game,Ship ship):base(game) {
+			this.ship = ship;
+			Game.Components.Add(this);
 			ship.Thrust += thrustEvent;
+			((Game)Game).UI.Orders += OrderHandler;
 		}
-		public void timerUpdate(GameTime gameTime) {
+
+		public override void Update(GameTime gameTime) {
 			lastUpdate = gameTime.TotalGameTime;
 			if(timeout < lastUpdate) {
 				if(ship.IsRotating()) {
@@ -65,8 +69,23 @@ namespace Dreadnought {
 					ship.counterMoment();
 					ignoreEvents = false;
 				}
+				if(ship.Speed.Z > desiredSpeed && ship.Speed.Z < 0 ) {
+					ignoreEvents = true;
+					//ship.accelerate();
+					ignoreEvents = false;
+				} else if(ship.Speed.Z < desiredSpeed-1 || ship.Speed.Z > 0) {
+					ignoreEvents = true;
+					//ship.decelerate();
+					ignoreEvents = false;
+				}
 			}
 		}
+		
+		private void OrderHandler(object sender, DreadnoughtUI.OrderEventArgs order) {
+			Console.WriteLine("AyAy");
+			desiredSpeed = order.Speed * -1;
+		}
+
 		public void thrustEvent(Thruster.ThrustDirection dir) {
 			if(!ignoreEvents) {
 				if(dir != Thruster.ThrustDirection.Forward) {
@@ -74,6 +93,7 @@ namespace Dreadnought {
 				}
 			}
 		}
+
 	}
 
 	class Ship : Microsoft.Xna.Framework.DrawableGameComponent {
@@ -81,15 +101,16 @@ namespace Dreadnought {
 		Model model;
 		Texture2D texture;
 		Matrix[] transforms;
-		
+
 		private Vector3 moment;
 		private Vector3 position;
+		public Vector3 Speed;
 
 		public Quaternion Orientation;
 		private Vector3 rotation;
 
 		private float speedLimit;
-		private float turnLimit;
+		private double turnConst = Math.PI / (360*100) ;
 
 		private Thruster thrusters;
 		private List<ModelMesh> shipModel;
@@ -100,11 +121,14 @@ namespace Dreadnought {
 
 		public Vector3 Position { get { return position; } set { position = value; } }
 
-		public Ship(Game game) : base(game) {
+		public Ship(Game game)
+			: base(game) {
 			Enabled = true;
+			
 		}
 
 		#endregion
+
 		protected override void LoadContent() {
 			model = Game.Content.Load<Model>("Ship");
 			thrusters = new Thruster(this);
@@ -113,23 +137,23 @@ namespace Dreadnought {
 			moment = new Vector3(0.0f);
 			position = new Vector3(0.0f);
 			speedLimit = 0.2f;
-			turnLimit = 0.0002f;
 
 			rotation = new Vector3(0.0f);
-			Orientation = Quaternion.CreateFromAxisAngle(Vector3.Up,0);
+			Orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0);
 
 			shipModel = walkModelTree(model.Bones["Ship"]);
 			thrusterModel = walkModelTree(model.Bones["Thruster"]);
-			//BasicFlightHelper copilot = new BasicFlightHelper(this);
+
+			new BasicFlightHelper((Game)Game,this);
 		}
 
 		public override void Update(GameTime gameTime) {
 			position += moment;
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, rotation.Y));
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, rotation.X));
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Forward, rotation.Z));
+			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, (float)(rotation.Y*turnConst)));
+			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, (float)(rotation.X*turnConst)));
+			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Forward, (float)(rotation.Z * turnConst)));
 			Orientation.Normalize();
-			//orientation = Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, 0f);
+			Speed = Vector3.Transform(moment,Orientation);
 
 
 			model.Root.Transform = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(position);
@@ -166,16 +190,14 @@ namespace Dreadnought {
 				model.CopyAbsoluteBoneTransformsTo(transforms);
 			}
 
-			//radToTarget(model.Root.Transform, Vector3.Forward);
-
 		}
 
 		private Vector3 faceDir(Vector3 to) {
 
-			Vector3 lf = Vector3.Transform(to, Quaternion.Conjugate( Orientation ));
+			Vector3 lf = Vector3.Transform(to, Quaternion.Conjugate(Orientation));
 			Vector3 lu = Vector3.Up;// Vector3.Transform(Vector3.Up, orientation);
 			lf.Normalize();
-			var r = Math.Sqrt( (lf.X*lf.X) + (lf.Y *lf.Y) + (lf.Z*lf.Z)); //sollte 1 sein
+			var r = Math.Sqrt((lf.X * lf.X) + (lf.Y * lf.Y) + (lf.Z * lf.Z)); //sollte 1 sein
 			var e = Math.Acos(lf.Z / r);
 			var p = Math.Atan2(lf.Y, lf.X);
 			lu.Normalize();
@@ -187,7 +209,7 @@ namespace Dreadnought {
 			Vector3 up = Vector3.Cross(lf, lr);
 			up.Normalize();
 			//((Game)Game).Camera.AddDebugVector(to * 400);
-			((Game)Game).Camera.AddDebugVector(lf*800);
+			//((Game)Game).Camera.AddDebugVector(lf * 800);
 			//((Game)Game).Camera.AddDebugVector(Vector3.Transform(lr * 400, Orientation));
 			//((Game)Game).Camera.AddDebugVector(Vector3.Transform(up * 400, Orientation));
 
@@ -197,9 +219,9 @@ namespace Dreadnought {
 			//lf.Z *= -1;
 
 			Matrix m = Matrix.CreateWorld(Vector3.Zero, lf, up);
-			
-			((Game)Game).Camera.AddDebugStar( m * Matrix.CreateWorld(Position,Vector3.Forward,Vector3.Up) );
-			((Game)Game).Camera.AddDebugStar(((Game)Game).World * Matrix.CreateTranslation(-400,5,0));
+
+			//((Game)Game).Camera.AddDebugStar(Matrix.CreateFromQuaternion(Orientation) * m * Matrix.CreateWorld(Position, Vector3.Forward, Vector3.Up));
+			((Game)Game).Camera.AddDebugStar(((Game)Game).World * Matrix.CreateTranslation(-400, 5, 0));
 
 			//Vector3 fo = Vector3.Transform(Vector3.Forward, Quaternion.Conjugate(orientation));
 			//Vector3 u = Vector3.Transform(Vector3.Up, Quaternion.Conjugate(orientation));
@@ -219,17 +241,17 @@ namespace Dreadnought {
 				v.Y = (Single)Math.Atan2(-m.M23, m.M22) * -1.0f;
 				v.Z = (Single)Math.Asin(m.M21) * -1.0f;
 			}
-			var epsilon = 0.001;
-			if(Math.Abs(v.X) < epsilon) 
+			var epsilon = 0.0005;
+			if(Math.Abs(v.X) < epsilon)
 				v.X = 0;
-			if(Math.Abs(v.Y) < epsilon) 
+			if(Math.Abs(v.Y) < epsilon)
 				v.Y = 0;
 			if(Math.Abs(v.Z) < epsilon)
 				v.Z = 0;
 			Console.WriteLine(v);
-			Console.WriteLine(r);
-			Console.WriteLine(e);
-			Console.WriteLine(p);
+			//Console.WriteLine(r);
+			//Console.WriteLine(e);
+			//Console.WriteLine(p);
 			return v;
 		}
 
@@ -298,7 +320,7 @@ namespace Dreadnought {
 			}
 			fancyDebug[line].Add(new KeyValuePair<int, float>(fancyDebug[line].Count + 1, value));
 		}
-		private void pushDebugPoints() {
+		public void PushDebugPoints() {
 			if(((Game)Game).UI.Graph != null) {
 				foreach(var line in fancyDebug.ToList()) {
 					((Game)Game).UI.Graph.AddLine(line.Key, line.Value.ToArray());
@@ -307,28 +329,45 @@ namespace Dreadnought {
 			fancyDebug.Clear();
 		}
 
-		private int requiredTurnAction(float diff, float motion) {
-			if(Math.Abs(diff) == 0 && Math.Abs(motion)<0 ) return 0;
+		private int requiredTurnAction(float diff, int motionSteps) {
+			int diffSteps = (int)(Math.Round(diff / turnConst));
+			if(Math.Abs(diff) == 0) {
+				if(Math.Abs(motionSteps) == 0) return 0;
+				if(motionSteps > 0) return -1;
+				if(motionSteps < 0) return 1;
+			}
+			var gd = MathHelper.Clamp(MathHelper.ToDegrees(diff), -180, 180);
 			int ret = 0;
-			int diffSteps = (int)(Math.Round(diff / turnLimit));
-			int motionSteps = (int)( Math.Round(motion / turnLimit));
-			int requiredSteps = motionSteps != 0 ? diffSteps / motionSteps : diffSteps;
+	
+			int requiredSteps = 0;
+			double kenn = 0;
 
 			if(diff > 0) ret = 1;
 			if(diff < 0) ret = -1;
-			if(Math.Abs(requiredSteps) * 2 < Math.Abs(motionSteps)) ret *= -1;
 
-			addDebugPoint("diffSteps", diffSteps/10);
-			addDebugPoint("motionSteps", motionSteps*10);
-			addDebugPoint("requiredSteps", requiredSteps/10);
+			if(Math.Abs(motionSteps) > 0) {
+				requiredSteps = motionSteps != 0 ? diffSteps / motionSteps : diffSteps;
+				kenn = ((double)Math.Abs(diffSteps) / (0.5*((double)Math.Abs(motionSteps)*(double)Math.Abs(motionSteps))));
+				if(kenn <= 1 && kenn > 0 && Math.Sign(motionSteps) == Math.Sign(diff)) {
+					ret *= -1;
+				}
+			}
+
+
+			
+			//addDebugPoint("gradDiff", gd);
+			//addDebugPoint("diffSteps", MathHelper.Clamp(diffSteps, -cl, cl));
+			//addDebugPoint("motionSteps", motionSteps);
+			//addDebugPoint("kennzahl", MathHelper.Clamp((float)kenn, -2, 2) * 10);
+			//addDebugPoint("requiredSteps", MathHelper.Clamp(requiredSteps, -cl, cl));
 			return ret;
 		}
-		public void turnToFace(Vector3 dir) {
+		public int turnToFace(Vector3 dir) {
 			Vector3 ypr = faceDir(dir);
-			
+			int ret = 0;
 			//Console.WriteLine(rotation);
 			//Console.WriteLine(ypr);
-			switch(requiredTurnAction(ypr.X, rotation.Y)) {
+			switch(requiredTurnAction(ypr.X, (int)rotation.Y)) {
 				case 1:
 					turnLeft();
 					break;
@@ -336,70 +375,34 @@ namespace Dreadnought {
 					turnRight();
 					break;
 				case 0:
-					pushDebugPoints();
+					ret += 1;
 					break;
 			}
-			
-				if(ypr.Y != 0) {
-					var cra = turnLimit * (int)(Math.Abs(ypr.Y) / turnLimit);
-					var rpt = Math.Abs(rotation.X);
-					var cr = rpt > 0 ? cra / rpt : cra / turnLimit;
-					var cd = rpt / turnLimit;
-					var diff = cr - cd;
-					//Console.WriteLine(diff);
-					if(Math.Abs(diff) >= 1) {
-						if(ypr.Y > 0 && diff > 0) turnUp();
-						if(ypr.Y < 0 && diff > 0) turnDown();
-						if(ypr.Y > 0 && diff < 0) turnDown();
-						if(ypr.Y < 0 && diff < 0) turnUp();
-						//return;
-					}
-				} else {
-					if(Math.Abs(rotation.X) <= turnLimit) {
-						rotation.X = 0;
-					} else {
-						counterRotationX();
-					}
-				}
-				if(ypr.Z != 0) {
-					if(ypr.Z != 0) {
-						var cra = turnLimit * (int)(Math.Abs(ypr.Z) / turnLimit);
-						var rpt = Math.Abs(rotation.Z);
-						var cr = rpt > 0 ? cra / rpt : cra / turnLimit;
-						var cd = rpt / turnLimit;
-						var diff = cr - cd;
-						//if(Math.Abs(diff) >= 400)
-						//	diff *= -1;
-						//Console.WriteLine(diff);
-						if(Math.Abs(diff) >= 1) {
-							if(ypr.Z > 0 && diff > 0) rollRight();
-							if(ypr.Z < 0 && diff > 0) rollLeft();
-							if(ypr.Z > 0 && diff < 0) rollLeft();
-							if(ypr.Z < 0 && diff < 0) rollRight();
-							//return;
-						}
-					} else {
-						if(Math.Abs(rotation.Z) <= turnLimit) {
-							rotation.Z = 0;
-						} else {
-							counterRotationZ();
-						}
-					}
-				}
-
-
-			/*
-			if(Math.Abs(ypr.Z) > 0.01) {
-				if(Math.Abs(ypr.Z) > Math.Abs(rotation.Z)){
-						if(ypr.Z > rotation.Z) rollLeft();
-						if(ypr.Z < rotation.Z) rollRight();
-					}  else
-				 else if(Math.Abs(ypr.Y) > 0.01) {
-				if(ypr.Y > 0) turnUp();
-				if(ypr.Y < 0) turnDown();
+			switch(requiredTurnAction(ypr.Y, (int)rotation.X)) {
+				case 1:
+					turnUp();
+					break;
+				case -1:
+					turnDown();
+					break;
+				case 0:
+					ret += 1;
+					break;
 			}
-			*/
-
+			if(ret >= 1) {
+				switch(requiredTurnAction(ypr.Z, (int)rotation.Z)) {
+					case 1:
+						rollLeft();
+						break;
+					case -1:
+						rollRight();
+						break;
+					case 0:
+						ret += 1;
+						break;
+				}
+			}
+			return ret;
 		}
 
 		public void counterRotation() {
@@ -409,9 +412,7 @@ namespace Dreadnought {
 		}
 
 		private void counterRotationZ() {
-			if(Math.Abs(rotation.Z) <= turnLimit) {
-				rotation.Z = 0;
-			} else if(rotation.Z > 0) {
+			if(rotation.Z > 0) {
 				rollRight();
 			} else if(rotation.Z < 0) {
 				rollLeft();
@@ -419,9 +420,7 @@ namespace Dreadnought {
 		}
 
 		private void counterRotationX() {
-			if(Math.Abs(rotation.X) <= turnLimit) {
-				rotation.X = 0;
-			} else if(rotation.X > 0) {
+			if(rotation.X > 0) {
 				turnDown();
 			} else if(rotation.X < 0) {
 				turnUp();
@@ -429,9 +428,7 @@ namespace Dreadnought {
 		}
 
 		private void counterRotationY() {
-			if(Math.Abs(rotation.Y) <= turnLimit) {
-				rotation.Y = 0;
-			} else if(rotation.Y > 0) {
+			if(rotation.Y > 0) {
 				turnRight();
 			} else if(rotation.Y < 0) {
 				turnLeft();
@@ -465,25 +462,25 @@ namespace Dreadnought {
 		}
 
 		public void turnLeft() {
-			rotation.Y += turnLimit;
+			rotation.Y += 1;
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontRight);
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackLeft);
 		}
 
 		public void turnRight() {
-			rotation.Y -= turnLimit;
+			rotation.Y -= 1;
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontLeft);
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackRight);
 		}
 
 		public void turnUp() {
-			rotation.X += turnLimit;
+			rotation.X += 1;
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontDown);
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackUp);
 		}
 
 		public void turnDown() {
-			rotation.X -= turnLimit;
+			rotation.X -= 1;
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontUp);
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackDown);
 		}
@@ -501,12 +498,12 @@ namespace Dreadnought {
 		}
 
 		internal void rollLeft() {
-			rotation.Z += turnLimit;
+			rotation.Z += 1;
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackUp);
 		}
 
 		internal void rollRight() {
-			rotation.Z -= turnLimit;
+			rotation.Z -= 1;
 			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontDown);
 		}
 

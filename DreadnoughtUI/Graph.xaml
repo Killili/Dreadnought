@@ -24,9 +24,24 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="PlotAreaStyle1" TargetType="Grid">
+            <Setter Property="Panel.Background">
+                <Setter.Value>
+                    <LinearGradientBrush EndPoint="0.457,0.296" StartPoint="0.459,1.296">
+                        <GradientStop Color="#FFCBCBCB" />
+                        <GradientStop Color="White" Offset="1" />
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="TitleStyle1" TargetType="visualizationToolkit:Title">
+            <Setter Property="Control.FontSize" Value="16" />
+            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center" />
+            <Setter Property="FrameworkElement.Margin" Value="0,10" />
+        </Style>
     </Window.Resources>
         <Grid>
-            <charting:Chart Name="chart" Title="Chart Title">
+            <charting:Chart Name="chart" Title="Chart Title" PlotAreaStyle="{StaticResource PlotAreaStyle1}" TitleStyle="{StaticResource TitleStyle1}">
             </charting:Chart>
     </Grid>
     
