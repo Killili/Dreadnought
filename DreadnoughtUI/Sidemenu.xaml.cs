@@ -38,7 +38,7 @@ namespace DreadnoughtUI {
 		}
 
 		private void slider1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
-			Orders(this, new OrderEventArgs(slider1.Value));
+			if(Orders != null) Orders(this, new OrderEventArgs(slider1.Value));
 		}
 	}
 }

@@ -13,14 +13,9 @@ using System.Windows.Forms.Integration;
 using DreadnoughtUI;
 
 namespace Dreadnought {
-	/// <summary>
-	/// This is the main type for Dreadnought game
-	/// </summary>
 	public class Game : Microsoft.Xna.Framework.Game {
 		GraphicsDeviceManager graphics;
-		public delegate void UpdateEvent(GameTime gt);
-		public static event UpdateEvent GameTimeUpdate;
-
+		
 		private Ship ship;
 		private Grid grid;
 		public Sidemenu UI;
@@ -29,9 +24,9 @@ namespace Dreadnought {
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
 
-		#region Config and Windowsstuff
-		private void config_init_stuff() {
-#if BLA
+		#region Config and Windows
+		private void config() {
+#if !DEBUG
 			AppDomain.CurrentDomain.UnhandledException += (s, e) => {
 				Exception ex = (Exception)e.ExceptionObject;
 				System.Windows.MessageBox.Show(ex.Message);
@@ -41,83 +36,62 @@ namespace Dreadnought {
 			graphics.PreferredBackBufferHeight = 768;
 			graphics.PreferredBackBufferWidth = 200 + 1024;
 			graphics.ApplyChanges();
-			Mouse.WindowHandle = Window.Handle;
-		}
-		#endregion
-
-		public Game() {
-			config_init_stuff();
-			Content.RootDirectory = "Content";
 			IsMouseVisible = true;
-		}
-
-		/// <summary>
-		/// Allows the game to perform any initialization it needs to before starting to run.
-		/// This is where it can query for any required services and load any non-graphic
-		/// related content.  Calling base.Initialize will enumerate through any components
-		/// and initialize them as well.
-		/// </summary>
-		protected override void Initialize() {
-			// TODO: Add your initialization logic here
-			Viewport v = GraphicsDevice.Viewport;
-			v.Width = Window.ClientBounds.Width - 200;
-			v.X = 200;
-			GraphicsDevice.Viewport = v;
+			Content.RootDirectory = "Content";
+			
 			ElementHost host = new ElementHost();
 			UI = new Sidemenu();
 			host.Child = UI;
-			
+
 			host.Location = new System.Drawing.Point(0, 0);
 			host.Size = new System.Drawing.Size(200, Window.ClientBounds.Height);
 			host.BackColorTransparent = true;
 			System.Windows.Forms.Control.FromHandle(Window.Handle).Controls.Add(host);
+		}
+		private void init() {
+			Viewport v = GraphicsDevice.Viewport;
+			v.Width = Window.ClientBounds.Width - 200;
+			v.X = 200;
+			GraphicsDevice.Viewport = v;
+		}
+		#endregion
+
+		public Game() {
+			config();
+		}
+
+		protected override void Initialize() {
+			init();
 			// init fps counter
 			var fpsCntr = new FPSCounter(this);
 			fpsCntr.Updated += delegate { this.Window.Title = "Dreadnought  (FPS: " + fpsCntr.FPS.ToString() + " )"; };
 			Components.Add(fpsCntr);
-
 			// add ship
 			ship = new Ship(this);
 			Components.Add(ship);
-
+			// add Copilot
+			Components.Add(new BasicFlightHelper(this, ship));
 			// add grid
 			grid = new Grid(this);
 			Components.Add(grid);
+
 			base.Initialize();
 		}
 
-		/// <summary>
-		/// LoadContent will be called once per game and is the place to load
-		/// all of your content.
-		/// </summary>
 		protected override void LoadContent() {
-			// Create a new SpriteBatch, which can be used to draw textures.
 			World = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
 			Camera = new Common.Camera(this);
 			Camera.Load(Content);
 			Camera.Position = new Vector3(1, 1000, 1);
 
-			// TODO: use this.Content to load your game content here
 		}
 
-		/// <summary>
-		/// UnloadContent will be called once per game and is the place to unload
-		/// all content.
-		/// </summary>
 		protected override void UnloadContent() {
-			// TODO: Unload any non ContentManager content here
 		}
 
-		/// <summary>
-		/// Allows the game to run logic such as updating the world,
-		/// checking for collisions, gathering input, and playing audio.
-		/// </summary>
-		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Update(GameTime gameTime) {
 			KeyboardState ks = Keyboard.GetState(PlayerIndex.One);
 			MouseState ms = Mouse.GetState();
-
-			if(GameTimeUpdate != null) GameTimeUpdate(gameTime);
 
 			if(ks.IsKeyDown(Keys.Escape)) {
 				this.Exit();
@@ -177,20 +151,14 @@ namespace Dreadnought {
 				}
 			}
 
-			if(ks.IsKeyDown(Keys.P)) ship.PushDebugPoints();
-
 			if(ms.LeftButton == ButtonState.Pressed && GraphicsDevice.Viewport.Bounds.Contains(ms.X,ms.Y)) {
 				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View, Camera.World);
 				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View, Camera.World);
 				faceDir = Vector3.Normalize(pos2 - ship.Position);
-				//Camera.AddDebugVector(pos2);
-				//Camera.AddDebugVector(ship.Position,pos2);
-				//Camera.AddDebugVector(pos1,pos2);
 			}
 
 			Camera.Up = Vector3.Transform(Vector3.Up, ship.Orientation);
 			Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 3000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
-			//Camera.Position = (Vector3.Up + Vector3.Backward) * 1000;
 			Vector3 gp = new Vector3((float)Math.Round(ship.Position.X / grid.Scale), (float)Math.Round(ship.Position.Y / grid.Scale), (float)Math.Round(ship.Position.Z / grid.Scale));
 			grid.Position = new Vector3(-(grid.Size / 2f), -(grid.Size / 2f), -(grid.Size / 2f)) + gp;
 			Camera.LookAt = ship.Position + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
@@ -202,10 +170,6 @@ namespace Dreadnought {
 			base.Update(gameTime);
 		}
 
-		/// <summary>
-		/// This is called when the game should draw itself.
-		/// </summary>
-		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw(GameTime gameTime) {
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 

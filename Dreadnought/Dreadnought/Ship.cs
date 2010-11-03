@@ -5,44 +5,10 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using DreadnoughtUI;
+using Dreadnought.Common;
 
 namespace Dreadnought {
-	class Thruster {
-		public enum ThrustDirection { Forward, Backward, FrontLeft, FrontRight, BackLeft, BackRight, FrontUp, FrontDown, BackUp, BackDown }
-		private Dictionary<ThrustDirection, TimeSpan> fireDuration;
-		private TimeSpan lastUpdate;
-
-		public Thruster(Ship ship) {
-			fireDuration = new Dictionary<ThrustDirection, TimeSpan>();
-			ship.Thrust += FireThruster;
-			Game.GameTimeUpdate += Update;
-		}
-		private void FireThruster(ThrustDirection dir) {
-			fireDuration[dir] = lastUpdate + TimeSpan.FromSeconds(0.01);
-		}
-
-		public void Update(GameTime gameTime) {
-			lastUpdate = gameTime.TotalGameTime;
-		}
-
-		public bool IsActive(ModelMesh mesh) {
-			if(mesh.Tag == null) {
-				ThrustDirection temp;
-				Enum.TryParse<ThrustDirection>(mesh.Name, true, out temp);
-				mesh.Tag = temp;
-			}
-			try {
-				if(fireDuration[(ThrustDirection)mesh.Tag] > lastUpdate) {
-					return true;
-				}
-			} catch(KeyNotFoundException) {
-				fireDuration[(ThrustDirection)mesh.Tag] = TimeSpan.Zero;
-				return false;
-			}
-			return false;
-		}
-	}
-
 	class BasicFlightHelper : GameComponent {
 		private TimeSpan lastUpdate;
 		private TimeSpan timeout;
@@ -52,7 +18,6 @@ namespace Dreadnought {
 
 		public BasicFlightHelper(Game game,Ship ship):base(game) {
 			this.ship = ship;
-			Game.Components.Add(this);
 			ship.Thrust += thrustEvent;
 			((Game)Game).UI.Orders += OrderHandler;
 		}
@@ -86,77 +51,69 @@ namespace Dreadnought {
 			desiredSpeed = order.Speed * -1;
 		}
 
-		public void thrustEvent(Thruster.ThrustDirection dir) {
+		public void thrustEvent(object sender,EventArgs args) {
 			if(!ignoreEvents) {
-				if(dir != Thruster.ThrustDirection.Forward) {
+				//if(dir != Thruster.ThrustDirection.Forward) {
 					timeout = lastUpdate + TimeSpan.FromSeconds(0.1);
-				}
+				//}
 			}
 		}
-
 	}
 
 	class Ship : Microsoft.Xna.Framework.DrawableGameComponent {
 		#region Fileds and Constructors
-		Model model;
-		Texture2D texture;
-		Matrix[] transforms;
-
-		private Vector3 moment;
-		private Vector3 position;
-		public Vector3 Speed;
-
-		public Quaternion Orientation;
-		private Vector3 rotation;
-
-		private float speedLimit;
-		private double turnConst = Math.PI / (360*100) ;
-
-		private Thruster thrusters;
+		
+		//internal stuff
+		private long gameTime;
+		private Vector3 moment = new Vector3(0.0f);
+		private Vector3 rotation = new Vector3(0.0f);
 		private List<ModelMesh> shipModel;
-		private List<ModelMesh> thrusterModel;
+		private Model model;
+		private Texture2D texture;
+		private Matrix[] transforms;
+		private Dictionary<ThrustDirection, long> thrusterLastActive = new Dictionary<ThrustDirection, long>();
+		private Dictionary<ThrustDirection, ModelMesh> thrusterModels = new Dictionary<ThrustDirection, ModelMesh>();
+	
+		//events
+		public event EventHandler Thrust;
 
-		public delegate void ThrusterEvent(Thruster.ThrustDirection dir);
-		public event ThrusterEvent Thrust;
+		//external stuff
+		public enum ThrustDirection { Forward, Backward, FrontLeft, FrontRight, BackLeft, BackRight, FrontUp, FrontDown, BackUp, BackDown, CenterLeftUp, CenterLeftDown, CenterRightUp, CenterRightDown }
+		public Vector3 Position = new Vector3(0.0f);
+		public Vector3 Speed = new Vector3(0.0f);
+		public Quaternion Orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0);
 
-		public Vector3 Position { get { return position; } set { position = value; } }
-
+		//constant stuff
+		private static double turnConst = Math.PI / (360*100) ;
+		private static float speedLimit = 0.2f;
+		private static long thrusterBurnTime = TimeSpan.FromSeconds(1.0 / 60.0).Ticks;
+		
 		public Ship(Game game)
 			: base(game) {
 			Enabled = true;
-			
 		}
-
 		#endregion
 
+		#region GameComponent
 		protected override void LoadContent() {
 			model = Game.Content.Load<Model>("Ship");
-			thrusters = new Thruster(this);
 			//texture = content.Load<Texture2D>("ShipTexture");
 			transforms = new Matrix[model.Bones.Count];
-			moment = new Vector3(0.0f);
-			position = new Vector3(0.0f);
-			speedLimit = 0.2f;
-
-			rotation = new Vector3(0.0f);
-			Orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0);
-
 			shipModel = walkModelTree(model.Bones["Ship"]);
-			thrusterModel = walkModelTree(model.Bones["Thruster"]);
-
-			new BasicFlightHelper((Game)Game,this);
+			initThrusters();
 		}
 
-		public override void Update(GameTime gameTime) {
-			position += moment;
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, (float)(rotation.Y*turnConst)));
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, (float)(rotation.X*turnConst)));
+		public override void Update(GameTime gt) {
+			gameTime = gt.TotalGameTime.Ticks;
+			Position += moment;
+			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, (float)(rotation.Y * turnConst)));
+			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, (float)(rotation.X * turnConst)));
 			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Forward, (float)(rotation.Z * turnConst)));
 			Orientation.Normalize();
-			Speed = Vector3.Transform(moment,Orientation);
+			Speed = Vector3.Transform(moment, Orientation);
 
 
-			model.Root.Transform = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(position);
+			model.Root.Transform = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(Position);
 			model.Bones["Radar"].Transform *= Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(1.5f));
 
 			model.CopyAbsoluteBoneTransformsTo(transforms);
@@ -191,41 +148,119 @@ namespace Dreadnought {
 			}
 
 		}
+		#endregion
 
-		private Vector3 faceDir(Vector3 to) {
+		#region Thrusters
+		private void initThrusters() {
+			foreach(int dir in Enum.GetValues(typeof(ThrustDirection))) {
+				thrusterLastActive[(ThrustDirection)dir] = 0;
+			}
+			model.Bones["Thrusters"].Children.Each(bone => {
+				ThrustDirection dir;
+				Enum.TryParse<ThrustDirection>(bone.Name, true, out dir);
+				thrusterModels.Add(
+					dir,
+					model.Meshes[bone.Name]
+				);
+			});
+		}
 
+		private void fireThruster(ThrustDirection dir) {
+			thrusterLastActive[dir] = gameTime;
+			if(Thrust != null) Thrust(this, new EventArgs());
+		}
+
+		private bool thrusterActive(ThrustDirection dir) {
+			return thrusterLastActive[dir] == gameTime;
+		}
+
+		private bool thrusterBurning(ThrustDirection dir) {
+			return thrusterLastActive[dir]+thrusterBurnTime >= gameTime;
+		}
+
+		private void drawThrusters() {
+			thrusterLastActive.Each((dir, time) => {
+				if( thrusterBurning(dir) ) {
+					if(thrusterModels.ContainsKey(dir)) {
+						drawThruster(thrusterModels[dir]);
+					}
+				}
+			});
+		}
+		#endregion
+
+		#region Draw
+
+		private List<ModelMesh> walkModelTree(ModelBone modelBone) {
+			List<ModelMesh> list = new List<ModelMesh>();
+			return walkModelTree(modelBone, list);
+		}
+
+		private List<ModelMesh> walkModelTree(ModelBone start, List<ModelMesh> list) {
+			foreach(ModelBone bone in start.Children) {
+				if(bone.Children.Count > 0) walkModelTree(bone, list);
+				foreach(ModelMesh mesh in model.Meshes) {
+					if(mesh.ParentBone == bone) {
+						list.Add(mesh);
+					}
+				}
+			}
+			return list;
+		}
+
+
+
+		public override void Draw(GameTime gt) {
+			foreach(ModelMesh mesh in shipModel) {
+				drawMesh(mesh);
+			}
+			drawThrusters();
+		}
+
+		private void drawMesh(ModelMesh mesh) {
+			foreach(BasicEffect effect in mesh.Effects) {
+				effect.World = transforms[mesh.ParentBone.Index];
+				effect.View = ((Dreadnought.Game)Game).Camera.View;
+				effect.Projection = ((Dreadnought.Game)Game).Camera.Projection;
+				effect.DirectionalLight0.Direction = Vector3.Down;
+				effect.LightingEnabled = true;
+				effect.PreferPerPixelLighting = true;
+				effect.EmissiveColor = Vector3.Zero;
+				effect.DiffuseColor = new Vector3(0.75f);
+			}
+			mesh.Draw();
+		}
+
+		private void drawThruster(ModelMesh mesh) {
+			foreach(BasicEffect effect in mesh.Effects) {
+				effect.World = transforms[mesh.ParentBone.Index];
+				effect.View = ((Dreadnought.Game)Game).Camera.View;
+				effect.Projection = ((Dreadnought.Game)Game).Camera.Projection;
+				effect.LightingEnabled = false;
+				effect.EmissiveColor = new Vector3(1f, 0.5f, 0f);
+			}
+			mesh.Draw();
+		}
+
+		#endregion
+
+		#region Movement
+		#region TurnToFace
+		private Vector3 radToFaceDirection(Vector3 to) {
 			Vector3 lf = Vector3.Transform(to, Quaternion.Conjugate(Orientation));
-			Vector3 lu = Vector3.Up;// Vector3.Transform(Vector3.Up, orientation);
+			Vector3 lu = Vector3.Up;
 			lf.Normalize();
-			var r = Math.Sqrt((lf.X * lf.X) + (lf.Y * lf.Y) + (lf.Z * lf.Z)); //sollte 1 sein
-			var e = Math.Acos(lf.Z / r);
-			var p = Math.Atan2(lf.Y, lf.X);
 			lu.Normalize();
-			//lf.Y *= -1;
-			//lf.X *= -1;
-			//lf.Z *= -1;
+
 			Vector3 lr = Vector3.Cross(lu, lf);
 			lr.Normalize();
 			Vector3 up = Vector3.Cross(lf, lr);
 			up.Normalize();
-			//((Game)Game).Camera.AddDebugVector(to * 400);
-			//((Game)Game).Camera.AddDebugVector(lf * 800);
-			//((Game)Game).Camera.AddDebugVector(Vector3.Transform(lr * 400, Orientation));
-			//((Game)Game).Camera.AddDebugVector(Vector3.Transform(up * 400, Orientation));
-
-
-			//lf.Normalize();
-			//lu.Normalize();
-			//lf.Z *= -1;
 
 			Matrix m = Matrix.CreateWorld(Vector3.Zero, lf, up);
 
-			//((Game)Game).Camera.AddDebugStar(Matrix.CreateFromQuaternion(Orientation) * m * Matrix.CreateWorld(Position, Vector3.Forward, Vector3.Up));
 			((Game)Game).Camera.AddDebugStar(((Game)Game).World * Matrix.CreateTranslation(-400, 5, 0));
 
-			//Vector3 fo = Vector3.Transform(Vector3.Forward, Quaternion.Conjugate(orientation));
-			//Vector3 u = Vector3.Transform(Vector3.Up, Quaternion.Conjugate(orientation));
-			//Matrix m = Matrix.CreateWorld(Vector3.Zero, fo, u);
 			Vector3 v = Vector3.Zero;
 
 			if(m.M21 > 0.998) { // singularity at north pole
@@ -248,85 +283,11 @@ namespace Dreadnought {
 				v.Y = 0;
 			if(Math.Abs(v.Z) < epsilon)
 				v.Z = 0;
-			Console.WriteLine(v);
+			//Console.WriteLine(v);
 			//Console.WriteLine(r);
 			//Console.WriteLine(e);
 			//Console.WriteLine(p);
 			return v;
-		}
-
-
-		#region Draw
-		private List<ModelMesh> walkModelTree(ModelBone modelBone) {
-			List<ModelMesh> list = new List<ModelMesh>();
-			return walkModelTree(modelBone, list);
-		}
-
-		private List<ModelMesh> walkModelTree(ModelBone start, List<ModelMesh> list) {
-			foreach(ModelBone bone in start.Children) {
-				if(bone.Children.Count > 0) walkModelTree(bone, list);
-				foreach(ModelMesh mesh in model.Meshes) {
-					if(mesh.ParentBone == bone) {
-						list.Add(mesh);
-					}
-				}
-			}
-			return list;
-		}
-
-
-
-		public override void Draw(GameTime gameTime) {
-			foreach(ModelMesh mesh in shipModel) {
-				drawMesh(mesh);
-			}
-			foreach(ModelMesh mesh in thrusterModel) {
-				if(thrusters.IsActive(mesh)) {
-					drawThrust(mesh);
-				}
-			}
-		}
-
-		private void drawMesh(ModelMesh mesh) {
-			foreach(BasicEffect effect in mesh.Effects) {
-				effect.World = transforms[mesh.ParentBone.Index];
-				effect.View = ((Dreadnought.Game)Game).Camera.View;
-				effect.Projection = ((Dreadnought.Game)Game).Camera.Projection;
-				effect.DirectionalLight0.Direction = Vector3.Down;
-				effect.LightingEnabled = true;
-				effect.PreferPerPixelLighting = true;
-				effect.EmissiveColor = Vector3.Zero;
-				effect.DiffuseColor = new Vector3(0.75f);
-			}
-			mesh.Draw();
-		}
-
-		private void drawThrust(ModelMesh mesh) {
-			foreach(BasicEffect effect in mesh.Effects) {
-				effect.World = transforms[mesh.ParentBone.Index];
-				effect.View = ((Dreadnought.Game)Game).Camera.View;
-				effect.Projection = ((Dreadnought.Game)Game).Camera.Projection;
-				effect.LightingEnabled = false;
-				effect.EmissiveColor = new Vector3(1f, 0.5f, 0f);
-			}
-			mesh.Draw();
-		}
-
-		#endregion
-		Dictionary<String, List<KeyValuePair<int, float>>> fancyDebug = new Dictionary<String, List<KeyValuePair<int, float>>>();
-		private void addDebugPoint(string line, float value) {
-			if(!fancyDebug.Keys.Contains(line)) {
-				fancyDebug[line] = new List<KeyValuePair<int, float>>();
-			}
-			fancyDebug[line].Add(new KeyValuePair<int, float>(fancyDebug[line].Count + 1, value));
-		}
-		public void PushDebugPoints() {
-			if(((Game)Game).UI.Graph != null) {
-				foreach(var line in fancyDebug.ToList()) {
-					((Game)Game).UI.Graph.AddLine(line.Key, line.Value.ToArray());
-				}
-			}
-			fancyDebug.Clear();
 		}
 
 		private int requiredTurnAction(float diff, int motionSteps) {
@@ -352,21 +313,12 @@ namespace Dreadnought {
 					ret *= -1;
 				}
 			}
-
-
-			
-			//addDebugPoint("gradDiff", gd);
-			//addDebugPoint("diffSteps", MathHelper.Clamp(diffSteps, -cl, cl));
-			//addDebugPoint("motionSteps", motionSteps);
-			//addDebugPoint("kennzahl", MathHelper.Clamp((float)kenn, -2, 2) * 10);
-			//addDebugPoint("requiredSteps", MathHelper.Clamp(requiredSteps, -cl, cl));
 			return ret;
 		}
+
 		public int turnToFace(Vector3 dir) {
-			Vector3 ypr = faceDir(dir);
+			Vector3 ypr = radToFaceDirection(dir);
 			int ret = 0;
-			//Console.WriteLine(rotation);
-			//Console.WriteLine(ypr);
 			switch(requiredTurnAction(ypr.X, (int)rotation.Y)) {
 				case 1:
 					turnLeft();
@@ -392,10 +344,10 @@ namespace Dreadnought {
 			if(ret >= 1) {
 				switch(requiredTurnAction(ypr.Z, (int)rotation.Z)) {
 					case 1:
-						rollLeft();
+						rollRight();
 						break;
 					case -1:
-						rollRight();
+						rollLeft();
 						break;
 					case 0:
 						ret += 1;
@@ -404,7 +356,7 @@ namespace Dreadnought {
 			}
 			return ret;
 		}
-
+		#endregion
 		public void counterRotation() {
 			counterRotationY();
 			counterRotationX();
@@ -413,9 +365,9 @@ namespace Dreadnought {
 
 		private void counterRotationZ() {
 			if(rotation.Z > 0) {
-				rollRight();
-			} else if(rotation.Z < 0) {
 				rollLeft();
+			} else if(rotation.Z < 0) {
+				rollRight();
 			}
 		}
 
@@ -450,75 +402,99 @@ namespace Dreadnought {
 			}
 		}
 
-		#region Movment
 		public void accelerate() {
-			moment += Vector3.Transform(Vector3.Forward, Orientation) * speedLimit;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.Forward);
+			if(!thrusterActive(ThrustDirection.Backward)) {
+				fireThruster(ThrustDirection.Backward);
+				moment += Vector3.Transform(Vector3.Forward, Orientation) * speedLimit;
+			}
 		}
 
 		public void decelerate() {
-			moment += Vector3.Transform(Vector3.Backward, Orientation) * speedLimit;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.Backward);
+			if(!thrusterActive(ThrustDirection.Forward)) {
+				fireThruster(ThrustDirection.Forward);
+				moment += Vector3.Transform(Vector3.Backward, Orientation) * speedLimit;
+			}
 		}
 
 		public void turnLeft() {
-			rotation.Y += 1;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontRight);
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackLeft);
+			if(!thrusterActive(ThrustDirection.FrontRight) && !thrusterActive(ThrustDirection.BackLeft)) {
+				fireThruster(ThrustDirection.FrontRight);
+				fireThruster(ThrustDirection.BackLeft);
+				rotation.Y += 1;
+			}
 		}
-
+		
 		public void turnRight() {
-			rotation.Y -= 1;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontLeft);
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackRight);
+			if(!thrusterActive(ThrustDirection.FrontLeft) && !thrusterActive(ThrustDirection.BackRight)) {
+				fireThruster(ThrustDirection.FrontLeft);
+				fireThruster(ThrustDirection.BackRight);
+				rotation.Y -= 1;
+			}
 		}
-
+	
 		public void turnUp() {
-			rotation.X += 1;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontDown);
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackUp);
+			if(!thrusterActive(ThrustDirection.FrontDown) && !thrusterActive(ThrustDirection.BackUp)) {
+				fireThruster(ThrustDirection.FrontDown);
+				fireThruster(ThrustDirection.BackUp);
+				rotation.X += 1;
+			}
 		}
 
 		public void turnDown() {
-			rotation.X -= 1;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontUp);
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackDown);
+			if(!thrusterActive(ThrustDirection.FrontUp) && !thrusterActive(ThrustDirection.BackDown)) {
+				fireThruster(ThrustDirection.FrontUp);
+				fireThruster(ThrustDirection.BackDown);
+				rotation.X -= 1;
+			}
 		}
 
 		public void rise() {
-			moment += Vector3.Transform(Vector3.Up, Orientation) * speedLimit;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontDown);
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackDown);
+			if(!thrusterActive(ThrustDirection.FrontDown) && !thrusterActive(ThrustDirection.BackDown)) {
+				fireThruster(ThrustDirection.FrontDown);
+				fireThruster(ThrustDirection.BackDown);
+				moment += Vector3.Transform(Vector3.Up, Orientation) * speedLimit;
+			}
 		}
 
 		public void sink() {
-			moment += Vector3.Transform(Vector3.Down, Orientation) * speedLimit;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontUp);
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackUp);
+			if(!thrusterActive(ThrustDirection.FrontUp) && !thrusterActive(ThrustDirection.BackUp)) {
+				fireThruster(ThrustDirection.FrontUp);
+				fireThruster(ThrustDirection.BackUp);
+				moment += Vector3.Transform(Vector3.Down, Orientation) * speedLimit;
+			}
 		}
 
 		internal void rollLeft() {
-			rotation.Z += 1;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackUp);
+			if(!thrusterActive(ThrustDirection.CenterLeftUp) && !thrusterActive(ThrustDirection.CenterRightDown)) {
+				fireThruster(ThrustDirection.CenterLeftUp);
+				fireThruster(ThrustDirection.CenterRightDown);
+				rotation.Z -= 1;
+			}
 		}
 
 		internal void rollRight() {
-			rotation.Z -= 1;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontDown);
+			if(!thrusterActive(ThrustDirection.CenterLeftDown) && !thrusterActive(ThrustDirection.CenterRightUp)) {
+				fireThruster(ThrustDirection.CenterLeftDown);
+				fireThruster(ThrustDirection.CenterRightUp);
+				rotation.Z += 1;
+			}
 		}
 
 		internal void strafeLeft() {
-			moment += Vector3.Transform(Vector3.Left, Orientation) * speedLimit;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontRight);
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackRight);
+			if(!thrusterActive(ThrustDirection.FrontRight) && !thrusterActive(ThrustDirection.BackRight)) {
+				fireThruster(ThrustDirection.FrontRight);
+				fireThruster(ThrustDirection.BackRight);
+				moment += Vector3.Transform(Vector3.Left, Orientation) * speedLimit;
+			}
 		}
 
 		internal void strafeRight() {
-			moment += Vector3.Transform(Vector3.Right, Orientation) * speedLimit;
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.FrontLeft);
-			if(Thrust != null) Thrust(Thruster.ThrustDirection.BackLeft);
+			if(!thrusterActive(ThrustDirection.FrontLeft) && !thrusterActive(ThrustDirection.BackLeft)) {
+				fireThruster(ThrustDirection.FrontLeft);
+				fireThruster(ThrustDirection.BackLeft);
+				moment += Vector3.Transform(Vector3.Right, Orientation) * speedLimit;
+			}
 		}
-		#endregion
 
 		internal bool IsRotating() {
 			if(rotation.Length() > 0) return true;
@@ -529,5 +505,6 @@ namespace Dreadnought {
 			if(moment.Length() > 0) return true;
 			return false;
 		}
+		#endregion
 	}
 }
