@@ -12,3 +12,5 @@ Dreadnought.suo
 >>>>>>> 870d9f794d1a8a4e24071ce891350b48762e82c7
 
 *.suo
+*.csproj.vs10x
+*.contentproj.vs10x
