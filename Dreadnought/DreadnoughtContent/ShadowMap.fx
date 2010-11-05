@@ -65,7 +65,7 @@ CreateShadowMap_VSOut CreateShadowMap_VertexShader(float4 Position: POSITION)
 {
     CreateShadowMap_VSOut Out;
     Out.Position = mul(Position, mul(World, LightViewProj)); 
-    Out.Depth = Out.Position.z + Out.Position.w;    
+    Out.Depth = Out.Position.z; //+ Out.Position.w;    
     return Out;
 }
 
