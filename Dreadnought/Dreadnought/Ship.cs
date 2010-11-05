@@ -259,7 +259,7 @@ namespace Dreadnought {
 
 			Matrix m = Matrix.CreateWorld(Vector3.Zero, lf, up);
 
-			((Game)Game).Camera.AddDebugStar(((Game)Game).World * Matrix.CreateTranslation(-400, 5, 0));
+			//((Game)Game).Camera.AddDebugStar(((Game)Game).World * Matrix.CreateTranslation(-400, 5, 0));
 
 			Vector3 v = Vector3.Zero;
 

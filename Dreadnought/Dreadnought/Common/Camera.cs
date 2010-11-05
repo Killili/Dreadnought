@@ -11,93 +11,78 @@ using Microsoft.Xna.Framework.Media;
 
 
 namespace Dreadnought.Common {
-	public class Camera {
+    public class Camera :GameComponent {
 
-		public Vector3 Position { get; set; }
-		public Vector3 LookAt { get; set; }
+        public Vector3 Position = Vector3.Forward;
+        public Vector3 LookAt = Vector3.Zero;
+        public Quaternion Orientation = Quaternion.CreateFromAxisAngle( Vector3.Left, 40f );
 
-		public Matrix View { get; private set; }
-		public Matrix Projection { get; private set; }
-		public Matrix World { get; private set; }
+        public Matrix View;
+        public Matrix Projection;
 
-		Game game;
-		SkySphere background;
-		private Vector3 lookAt;
-		private List<VertexPositionColor> pointList;
-		private List<short> pointOrder;
-		private BasicEffect effect;
-		public Vector3 Up;
+        public Vector3 Up = Vector3.Up;
+        public float Zoom { get; set; }
+        
+        private bool reset = true;
+        private Vector3 shipPos;
 
-		public Camera(Game game) {
-			this.game = game;
-			Position = new Vector3(500, 500, 500);
-			pointList = new List<VertexPositionColor>();
-			pointOrder = new List<short>();
-			LookAt = Vector3.Zero;
-			Up = Vector3.Up;
-		}
+        public Camera( Game game ) : base( game ) {
+            Zoom = 1000;
+        }
 
+        internal void TurnRight( int x ) {
+            reset = false;
+            shipPos = ( (Game)Game ).ship.Position;
+            Quaternion rotation = Quaternion.CreateFromAxisAngle( Vector3.Up, MathHelper.ToRadians( x / 4f ) );
+            Quaternion.Concatenate( ref Orientation, ref rotation, out Orientation );
+            Orientation.Normalize();
+            LookAt = shipPos;
+        }
 
-		public void Load(ContentManager content) {
-			background = new SkySphere(game);
-			background.Load(content);
-			effect = new BasicEffect(game.GraphicsDevice);
-			effect.VertexColorEnabled = true;
-			effect.World = game.World;
-		}
+        internal void TurnLeft( int x ) {
+            reset = false;
+            shipPos = ( (Game)Game ).ship.Position;
+            Quaternion rotation = Quaternion.CreateFromAxisAngle( Vector3.Down, MathHelper.ToRadians( x / 4f ) );
+            Quaternion.Concatenate( ref Orientation, ref rotation, out Orientation );
+            Orientation.Normalize();
+            LookAt = shipPos;
+        }
 
-		public void Update(GameTime gameTime) {
-			World = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
-			View = Matrix.CreateLookAt(Position, LookAt, Up);
-			Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, game.GraphicsDevice.Viewport.AspectRatio, 1, 200000);
+        internal void TurnUp( int y ) {
+            reset = false;
+            shipPos = ( (Game)Game ).ship.Position;
+            Quaternion rotation = Quaternion.CreateFromAxisAngle( Vector3.Left, MathHelper.ToRadians( y / 2f ) );
+            Quaternion.Concatenate( ref Orientation, ref rotation, out Orientation );
+            Orientation.Normalize();
+            LookAt = shipPos;
+        }
 
-			effect.World = Matrix.CreateWorld(Vector3.Zero,Vector3.Forward,Vector3.Up);
-			effect.View = View;
-			effect.Projection = Projection;
+        internal void TurnDown( int y ) {
+            reset = false;
+            shipPos = ( (Game)Game ).ship.Position;
+            Quaternion rotation = Quaternion.CreateFromAxisAngle( Vector3.Right, MathHelper.ToRadians( y / 2f ) );
+            Quaternion.Concatenate( ref Orientation, ref rotation, out Orientation );
+            Orientation.Normalize();
+            LookAt = shipPos;
+        }
 
-			background.Update(gameTime);
-		}
+        internal void resetLook() {
+            reset = true;
+        }
 
-		public void AddDebugVector(Vector3 v) {
-			AddDebugVector(Vector3.Zero, v);
-		}
-
-		public void AddDebugVector(Vector3 v1, Vector3 v2) {
-			Vector3 v = Vector3.Normalize(v2 - v1);
-			Color color = new Color(Math.Abs(v.X), Math.Abs(v.Y), Math.Abs(v.Z));
-
-			pointList.Add(new VertexPositionColor(v1, color));
-			pointList.Add(new VertexPositionColor(v2, color));
-			pointOrder.Add((short)(pointList.Count - 2));
-			pointOrder.Add((short)(pointList.Count - 1));
-		}
-
-		public void AddDebugStar(Matrix m) {
-			Vector3 c = Vector3.Transform(Vector3.Zero, m);
-			AddDebugVector(c, c + (m.Right * 400));
-			AddDebugVector(c, c + (m.Up * 400));
-			AddDebugVector(c, c + (m.Forward * 400));
-		}
-
-		public void Draw() {
-			background.Draw();
-			if(pointOrder.Count >= 2) {
-				foreach(EffectPass pass in effect.CurrentTechnique.Passes) {
-					pass.Apply();
-
-					game.GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>(
-						 PrimitiveType.LineList,
-						 pointList.ToArray(),
-						 0,  // vertex buffer offset to add to each element of the index buffer
-						 pointList.Count,  // number of vertices in pointList
-						 pointOrder.ToArray(),  // the index buffer
-						 0,  // first index element to read
-						 pointOrder.Count / 2  // number of primitives to draw
-					);
-				}
-				pointList.Clear();
-				pointOrder.Clear();
-			}
-		}
-	}
+        public override void Update( GameTime gameTime ) {
+            shipPos = ( (Game)Game ).ship.Position;
+            LookAt = shipPos;
+            Projection = Matrix.CreatePerspectiveFieldOfView( MathHelper.PiOver4, ( (Game)Game ).GraphicsDevice.Viewport.AspectRatio, 1, 200000 );
+            if(reset) {
+                Orientation = Quaternion.CreateFromAxisAngle( Vector3.Right, 45f );
+                Position = shipPos + new Vector3( 0f, 1000f, 1500f );
+                View = Matrix.CreateLookAt( Position, LookAt, Up );
+            } else {
+                Position = shipPos + Vector3.Transform( Vector3.Backward * Zoom, Orientation );
+                View = Matrix.CreateLookAt( Position, LookAt, Up );
+            }
+            base.Update( gameTime );
+        }
+    }
 }

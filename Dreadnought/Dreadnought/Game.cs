@@ -16,10 +16,12 @@ namespace Dreadnought {
 	public class Game : Microsoft.Xna.Framework.Game {
 		GraphicsDeviceManager graphics;
 		
-		private Ship ship;
+		internal Ship ship;
 		private Grid grid;
 		public Sidemenu UI;
 		private Nullable<Vector3> faceDir;
+
+        private int msPosX, msPosY;
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
@@ -81,8 +83,6 @@ namespace Dreadnought {
 		protected override void LoadContent() {
 			World = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
 			Camera = new Common.Camera(this);
-			Camera.Load(Content);
-			Camera.Position = new Vector3(1, 1000, 1);
 
 		}
 
@@ -152,18 +152,48 @@ namespace Dreadnought {
 			}
 
 			if(ms.LeftButton == ButtonState.Pressed && GraphicsDevice.Viewport.Bounds.Contains(ms.X,ms.Y)) {
-				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View, Camera.World);
-				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View, Camera.World);
+				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View, World);
+				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View, World);
 				faceDir = Vector3.Normalize(pos2 - ship.Position);
 			}
 
-			Camera.Up = Vector3.Transform(Vector3.Up, ship.Orientation);
-			Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 3000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
+            Camera.Up = Vector3.Transform( Vector3.Up, ship.Orientation );
+            if(ms.RightButton == ButtonState.Pressed && GraphicsDevice.Viewport.Bounds.Contains( ms.X, ms.Y )) {
+
+                int x = ms.X - GraphicsDevice.Viewport.Bounds.Center.X;
+                int y = ms.Y - GraphicsDevice.Viewport.Bounds.Center.Y;
+                if(IsMouseVisible) {
+                    IsMouseVisible = false;
+                    msPosX = ms.X;
+                    msPosY = ms.Y;
+                    x = 0;
+                    y = 0;
+                }
+                Mouse.SetPosition( GraphicsDevice.Viewport.Bounds.Center.X, GraphicsDevice.Viewport.Bounds.Center.Y );
+                if(x > 0) {
+                    Camera.TurnRight( x );
+                } else if(x < 0) {
+                    Camera.TurnLeft( -x );
+                }
+                if(y < 0) {
+                    Camera.TurnUp( y );
+                } else if(y > 0) {
+                    Camera.TurnDown( -y );
+                }
+
+            }
+            if(ms.RightButton == ButtonState.Released && GraphicsDevice.Viewport.Bounds.Contains( ms.X, ms.Y )) {
+                if(!IsMouseVisible) {
+                    Mouse.SetPosition( msPosX, msPosY );
+                    IsMouseVisible = true;
+                }
+            }
+            if(ks.IsKeyDown( Keys.NumPad0 )) // this is the panic-camera-button
+                Camera.resetLook();
+
 			Vector3 gp = new Vector3((float)Math.Round(ship.Position.X / grid.Scale), (float)Math.Round(ship.Position.Y / grid.Scale), (float)Math.Round(ship.Position.Z / grid.Scale));
 			grid.Position = new Vector3(-(grid.Size / 2f), -(grid.Size / 2f), -(grid.Size / 2f)) + gp;
-			Camera.LookAt = ship.Position + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
-
-			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
+			
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
 			Camera.Update(gameTime);
 
@@ -173,7 +203,6 @@ namespace Dreadnought {
 		protected override void Draw(GameTime gameTime) {
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 
-			Camera.Draw();
 			base.Draw(gameTime);
 		}
 	}

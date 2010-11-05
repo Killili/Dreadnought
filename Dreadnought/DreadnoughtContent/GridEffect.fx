@@ -40,7 +40,6 @@ technique Fog
     pass Foging
     {
 		AlphaBlendEnable = true;
-		ZWriteEnable = false;
 		  
 		SrcBlend = SrcAlpha;
 		DestBlend = InvSrcAlpha;

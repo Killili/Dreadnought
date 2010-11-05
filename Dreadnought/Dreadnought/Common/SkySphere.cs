@@ -33,7 +33,7 @@ namespace Dreadnought.Common {
 
         public void Update(GameTime gameTime) {
                 effect.Parameters["EyePosition"].SetValue( game.Camera.Position );
-                effect.Parameters["World"].SetValue( Matrix.CreateScale(1000) * game.Camera.World );
+                effect.Parameters["World"].SetValue( Matrix.CreateScale(1000) * game.World );
                 effect.Parameters["View"].SetValue( game.Camera.View );
                 effect.Parameters["Projection"].SetValue( game.Camera.Projection );
         }
