@@ -159,7 +159,7 @@ namespace Dreadnought {
 			//Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 3000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
 			Vector3 gp = new Vector3((float)Math.Round(Ship.Position.X / grid.Scale), (float)Math.Round(Ship.Position.Y / grid.Scale), (float)Math.Round(Ship.Position.Z / grid.Scale));
 			grid.Position = new Vector3(-(grid.Size / 2f), -(grid.Size / 2f), -(grid.Size / 2f)) + gp;
-			Camera.LookAt = Ship.Position * 500;
+			Camera.LookAt = Ship.Position;
 
 			Camera.Position = new Vector3(1,1,1) * 1000;
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
