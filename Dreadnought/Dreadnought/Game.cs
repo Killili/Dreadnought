@@ -15,14 +15,14 @@ using DreadnoughtUI;
 namespace Dreadnought {
 	public class Game : Microsoft.Xna.Framework.Game {
 		GraphicsDeviceManager graphics;
-		
-		private Ship ship;
+		internal Ship Ship;
 		private Grid grid;
 		public Sidemenu UI;
 		private Nullable<Vector3> faceDir;
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
+		public Vector3 SunDirection = Vector3.Right;
 
 		#region Config and Windows
 		private void config() {
@@ -33,6 +33,7 @@ namespace Dreadnought {
 			};
 #endif
 			graphics = new GraphicsDeviceManager(this);
+			
 			graphics.PreferredBackBufferHeight = 768;
 			graphics.PreferredBackBufferWidth = 200 + 1024;
 			graphics.ApplyChanges();
@@ -49,10 +50,7 @@ namespace Dreadnought {
 			System.Windows.Forms.Control.FromHandle(Window.Handle).Controls.Add(host);
 		}
 		private void init() {
-			Viewport v = GraphicsDevice.Viewport;
-			v.Width = Window.ClientBounds.Width - 200;
-			v.X = 200;
-			GraphicsDevice.Viewport = v;
+			
 		}
 		#endregion
 
@@ -67,10 +65,10 @@ namespace Dreadnought {
 			fpsCntr.Updated += delegate { this.Window.Title = "Dreadnought  (FPS: " + fpsCntr.FPS.ToString() + " )"; };
 			Components.Add(fpsCntr);
 			// add ship
-			ship = new Ship(this);
-			Components.Add(ship);
+			Ship = new Ship(this);
+			Components.Add(Ship);
 			// add Copilot
-			Components.Add(new BasicFlightHelper(this, ship));
+			Components.Add(new BasicFlightHelper(this, Ship));
 			// add grid
 			grid = new Grid(this);
 			Components.Add(grid);
@@ -98,55 +96,55 @@ namespace Dreadnought {
 			}
 
 			if(ks.IsKeyDown(Keys.W)) {
-				ship.accelerate();
+				Ship.accelerate();
 			} else if(ks.IsKeyDown(Keys.S)) {
-				ship.decelerate();
+				Ship.decelerate();
 			}
 			if(ks.IsKeyDown(Keys.Left)) {
-				ship.turnLeft();
+				Ship.turnLeft();
 			} else if(ks.IsKeyDown(Keys.Right)) {
-				ship.turnRight();
+				Ship.turnRight();
 			}
 
 			if(ks.IsKeyDown(Keys.X)) {
-				ship.counterRotation();
+				Ship.counterRotation();
 			}
 			if(ks.IsKeyDown(Keys.C)) {
-				ship.counterMoment();
+				Ship.counterMoment();
 			}
 
 			if(ks.IsKeyDown(Keys.Down)) {
-				ship.turnUp();
+				Ship.turnUp();
 			} else if(ks.IsKeyDown(Keys.Up)) {
-				ship.turnDown();
+				Ship.turnDown();
 			}
 
 			if(ks.IsKeyDown(Keys.R)) {
-				ship.rise();
+				Ship.rise();
 			} else if(ks.IsKeyDown(Keys.F)) {
-				ship.sink();
+				Ship.sink();
 			}
 
 			if(ks.IsKeyDown(Keys.Q)) {
-				ship.rollLeft();
+				Ship.rollLeft();
 			} else if(ks.IsKeyDown(Keys.E)) {
-				ship.rollRight();
+				Ship.rollRight();
 			}
 
 			if(ks.IsKeyDown(Keys.A)) {
-				ship.strafeLeft();
+				Ship.strafeLeft();
 			} else if(ks.IsKeyDown(Keys.D)) {
-				ship.strafeRight();
+				Ship.strafeRight();
 			}
 
 			if(ks.IsKeyDown(Keys.L)) {
-				ship.turnToFace(Vector3.Right);
+				Ship.turnToFace(Vector3.Right);
 			} else if(ks.IsKeyDown(Keys.J)) {
-				ship.turnToFace(Vector3.Left);
+				Ship.turnToFace(Vector3.Left);
 			}
 
 			if(faceDir != null) {
-				if(ship.turnToFace(faceDir.Value) == 3) {
+				if(Ship.turnToFace(faceDir.Value) == 3) {
 					faceDir = null;
 				}
 			}
@@ -154,16 +152,16 @@ namespace Dreadnought {
 			if(ms.LeftButton == ButtonState.Pressed && GraphicsDevice.Viewport.Bounds.Contains(ms.X,ms.Y)) {
 				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View, Camera.World);
 				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View, Camera.World);
-				faceDir = Vector3.Normalize(pos2 - ship.Position);
+				faceDir = Vector3.Normalize(pos2 - Ship.Position);
 			}
 
-			Camera.Up = Vector3.Transform(Vector3.Up, ship.Orientation);
-			Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 3000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
-			Vector3 gp = new Vector3((float)Math.Round(ship.Position.X / grid.Scale), (float)Math.Round(ship.Position.Y / grid.Scale), (float)Math.Round(ship.Position.Z / grid.Scale));
+			Camera.Up = Vector3.Up;
+			//Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 3000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
+			Vector3 gp = new Vector3((float)Math.Round(Ship.Position.X / grid.Scale), (float)Math.Round(Ship.Position.Y / grid.Scale), (float)Math.Round(Ship.Position.Z / grid.Scale));
 			grid.Position = new Vector3(-(grid.Size / 2f), -(grid.Size / 2f), -(grid.Size / 2f)) + gp;
-			Camera.LookAt = ship.Position + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
+			Camera.LookAt = Ship.Position * 500;
 
-			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
+			Camera.Position = new Vector3(1,1,1) * 1000;
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
 			Camera.Update(gameTime);
 
@@ -171,10 +169,17 @@ namespace Dreadnought {
 		}
 
 		protected override void Draw(GameTime gameTime) {
+			
+			
+			Ship.DrawShadow();
+			Viewport v = GraphicsDevice.Viewport;
+			v.Width = Window.ClientBounds.Width - 200;
+			v.X = 200;
+			GraphicsDevice.Viewport = v;
 			GraphicsDevice.Clear(Color.CornflowerBlue);
-
 			Camera.Draw();
 			base.Draw(gameTime);
+			
 		}
 	}
 }

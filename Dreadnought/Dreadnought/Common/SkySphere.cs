@@ -45,7 +45,7 @@ namespace Dreadnought.Common {
             foreach (ModelMesh mesh in model.Meshes) {
                 mesh.Draw();
             }
-            game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            
             game.GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
         }
 

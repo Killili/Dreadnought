@@ -82,11 +82,13 @@ namespace Dreadnought {
 		public Vector3 Position = new Vector3(0.0f);
 		public Vector3 Speed = new Vector3(0.0f);
 		public Quaternion Orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0);
+		public BoundingBox BoundingBox = new BoundingBox(new Vector3(-80, -70, 370), new Vector3(80, 100, -370));
 
 		//constant stuff
 		private static double turnConst = Math.PI / (360*100) ;
 		private static float speedLimit = 0.2f;
 		private static long thrusterBurnTime = TimeSpan.FromSeconds(1.0 / 60.0).Ticks;
+		private Shadow shadow;
 		
 		public Ship(Game game)
 			: base(game) {
@@ -100,6 +102,8 @@ namespace Dreadnought {
 			//texture = content.Load<Texture2D>("ShipTexture");
 			transforms = new Matrix[model.Bones.Count];
 			shipModel = walkModelTree(model.Bones["Ship"]);
+			shadow = new Shadow((Game)Game, this);
+			shipModel.Each( mesh => mesh.MeshParts.Each( part => part.Effect = shadow.Effect ));
 			initThrusters();
 		}
 
@@ -209,12 +213,19 @@ namespace Dreadnought {
 		}
 
 
-
+		public void DrawShadow() {
+			shadow.CreateShadowMap();
+		}
 		public override void Draw(GameTime gt) {
-			foreach(ModelMesh mesh in shipModel) {
-				drawMesh(mesh);
-			}
+			shadow.DrawWithShadowMap();
 			drawThrusters();
+		}
+
+		public void DrawGeometry() {
+			foreach(ModelMesh mesh in shipModel) {
+				shadow.Effect.Parameters["World"].SetValue( transforms[mesh.ParentBone.Index] );
+				mesh.Draw();
+			}
 		}
 
 		private void drawMesh(ModelMesh mesh) {

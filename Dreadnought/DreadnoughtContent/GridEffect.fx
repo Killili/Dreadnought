@@ -31,7 +31,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input){
 float4 PixelShaderFunction(PixelShaderInput input) : COLOR0{
 	float4 color = Color;
 	float dist = distance(BlendPoint, input.WorldPos);
-	color.a = 1 - (dist-Near) / (Far-Near)  ;
+	color.a = Color.a - clamp( (dist-Near) / (Far-Near),0,Color.a );
     return color;
 }
 
@@ -39,12 +39,6 @@ technique Fog
 {
     pass Foging
     {
-		AlphaBlendEnable = true;
-		ZWriteEnable = false;
-		  
-		SrcBlend = SrcAlpha;
-		DestBlend = InvSrcAlpha;
-
         VertexShader = compile vs_2_0 VertexShaderFunction();
         PixelShader = compile ps_2_0 PixelShaderFunction();
     }

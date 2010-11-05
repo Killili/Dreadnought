@@ -68,19 +68,25 @@ namespace Dreadnought {
         }
 
         public override void Update( GameTime gameTime ) {
-            v = ( (Game)Game ).Camera.Position;
+            v = ( (Game)Game ).Ship.Position;
             Matrix World = Matrix.CreateWorld( Position, Vector3.Forward, Vector3.Up ) * Matrix.CreateScale( Scale );
             effect.Parameters["BlendPoint"].SetValue( v );
-            effect.Parameters["Near"].SetValue( 10000f );
+            effect.Parameters["Near"].SetValue( 5000f );
             effect.Parameters["Far"].SetValue( 15000f );
             effect.Parameters["gWVP"].SetValue( World * ( (Game)Game ).Camera.View * ( (Game)Game ).Camera.Projection );
             effect.Parameters["gWorld"].SetValue( World );
-            effect.Parameters["Color"].SetValue( new Vector4( 0f, 0f, 0.6f, 1f ) );
+            effect.Parameters["Color"].SetValue( new Vector4( 0f, 0f, 0.6f, 0.3f ) );
             base.Update( gameTime );
         }
 
         public override void Draw( GameTime gameTime ) {
-            ( (Game)Game ).GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+            //( (Game)Game ).GraphicsDevice.RasterizerState = RasterizerState.CullNone;
+			  GraphicsDevice.BlendState = BlendState.NonPremultiplied;
+			  //GraphicsDevice.BlendState.AlphaSourceBlend = Blend.SourceAlpha;
+			  //GraphicsDevice.BlendState.AlphaDestinationBlend = Blend.InverseSourceAlpha;
+			  //AlphaBlendEnable = true;
+			  //SrcBlend = SrcAlpha;
+			  //DestBlend = InvSrcAlpha;
             foreach( EffectPass pass in effect.CurrentTechnique.Passes ) {
                 pass.Apply();
                 GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>(
@@ -92,6 +98,8 @@ namespace Dreadnought {
                     0,
                     pointOrder.Count / 2 );
             }
+				GraphicsDevice.BlendState = BlendState.Opaque;
+				//GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         }
     }
 }
