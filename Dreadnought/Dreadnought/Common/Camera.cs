@@ -80,7 +80,7 @@ namespace Dreadnought.Common {
 		}
 
 		public void Draw() {
-			background.Draw();
+			
 			if(pointOrder.Count >= 2) {
 				foreach(EffectPass pass in effect.CurrentTechnique.Passes) {
 					pass.Apply();

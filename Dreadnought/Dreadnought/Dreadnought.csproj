@@ -63,6 +63,9 @@
     <StartupObject>Dreadnought.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BEPUphysics">
+      <HintPath>.\BEPUphysics.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Xna.Framework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86">
       <Private>False</Private>
     </Reference>
@@ -121,6 +124,10 @@
     <Compile Include="Common\Camera.cs" />
     <Compile Include="Common\Extensions.cs" />
     <Compile Include="Common\FPSCounter.cs" />
+    <Compile Include="Common\Geometry\CubePrimitive.cs" />
+    <Compile Include="Common\Geometry\GeometricPrimitive.cs" />
+    <Compile Include="Common\Geometry\SpherePrimitive.cs" />
+    <Compile Include="Common\Geometry\VertexPositionNormal.cs" />
     <Compile Include="Common\SkySphere.cs" />
     <Compile Include="Grid.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

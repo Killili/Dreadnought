@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using DreadnoughtUI;
 using Dreadnought.Common;
+using BEPUphysics.Entities;
+using BEPUphysics;
 
 namespace Dreadnought {
 	class BasicFlightHelper : GameComponent {
@@ -85,12 +87,17 @@ namespace Dreadnought {
 
 		//constant stuff
 		private static double turnConst = Math.PI / (360*100) ;
-		private static float speedLimit = 0.2f;
+		private static float speedLimit = 20f;
 		private static long thrusterBurnTime = TimeSpan.FromSeconds(1.0 / 60.0).Ticks;
+		public Box phyBody;
 		
-		public Ship(Game game)
+		public Ship(Game game,Space space)
 			: base(game) {
 			Enabled = true;
+			phyBody = new Box(Vector3.Zero, 8, 10, 60,10);
+			phyBody.AngularDamping = 0f;
+			phyBody.LinearDamping = 0f;
+			space.Add(phyBody);
 		}
 		#endregion
 
@@ -105,15 +112,8 @@ namespace Dreadnought {
 
 		public override void Update(GameTime gt) {
 			gameTime = gt.TotalGameTime.Ticks;
-			Position += moment;
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, (float)(rotation.Y * turnConst)));
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, (float)(rotation.X * turnConst)));
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Forward, (float)(rotation.Z * turnConst)));
-			Orientation.Normalize();
-			Speed = Vector3.Transform(moment, Orientation);
 
-
-			model.Root.Transform = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(Position);
+			model.Root.Transform = Matrix.CreateScale(0.1f) * phyBody.WorldTransform;
 			model.Bones["Radar"].Transform *= Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(1.5f));
 
 			model.CopyAbsoluteBoneTransformsTo(transforms);
@@ -364,39 +364,39 @@ namespace Dreadnought {
 		}
 
 		private void counterRotationZ() {
-			if(rotation.Z > 0) {
+			if(phyBody.MotionState.AngularVelocity.Z < 0) {
 				rollLeft();
-			} else if(rotation.Z < 0) {
+			} else if(phyBody.MotionState.AngularVelocity.Z > 0) {
 				rollRight();
 			}
 		}
 
 		private void counterRotationX() {
-			if(rotation.X > 0) {
+			if(phyBody.MotionState.AngularVelocity.X > 0) {
 				turnDown();
-			} else if(rotation.X < 0) {
+			} else if(phyBody.MotionState.AngularVelocity.X < 0) {
 				turnUp();
 			}
 		}
 
 		private void counterRotationY() {
-			if(rotation.Y > 0) {
+			if(phyBody.MotionState.AngularVelocity.Y > 0) {
 				turnRight();
-			} else if(rotation.Y < 0) {
+			} else if(phyBody.MotionState.AngularVelocity.Y < 0) {
 				turnLeft();
 			}
 		}
 
 		public void counterMoment() {
-			Vector3 temp = Vector3.Transform(moment, Quaternion.Inverse(Orientation));
-			if(temp.Length() > speedLimit) {
-				if(Math.Abs(temp.X) < speedLimit) temp.X = 0;
+			Vector3 temp = Vector3.Transform(phyBody.MotionState.LinearVelocity, Matrix.Invert(phyBody.MotionState.OrientationMatrix));
+			if(temp.Length() > 0) {
+				
 				if(temp.X < 0) strafeRight();
 				if(temp.X > 0) strafeLeft();
-				if(Math.Abs(temp.Z) < speedLimit) temp.Z = 0;
+				
 				if(temp.Z > 0) accelerate();
-				//if(temp.Z < 0) decelerate();
-				if(Math.Abs(temp.Y) < speedLimit) temp.Y = 0;
+				if(temp.Z < 0) decelerate();
+				
 				if(temp.Y > 0) sink();
 				if(temp.Y < 0) rise();
 			}
@@ -405,14 +405,18 @@ namespace Dreadnought {
 		public void accelerate() {
 			if(!thrusterActive(ThrustDirection.Backward)) {
 				fireThruster(ThrustDirection.Backward);
-				moment += Vector3.Transform(Vector3.Forward, Orientation) * speedLimit;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0,0,phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Forward , phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection*speedLimit, true);
 			}
 		}
 
 		public void decelerate() {
 			if(!thrusterActive(ThrustDirection.Forward)) {
 				fireThruster(ThrustDirection.Forward);
-				moment += Vector3.Transform(Vector3.Backward, Orientation) * speedLimit;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, -phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Backward, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection*speedLimit, true);
 			}
 		}
 
@@ -420,7 +424,12 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.FrontRight) && !thrusterActive(ThrustDirection.BackLeft)) {
 				fireThruster(ThrustDirection.FrontRight);
 				fireThruster(ThrustDirection.BackLeft);
-				rotation.Y += 1;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, -phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Left, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection*speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Right, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection*speedLimit);
 			}
 		}
 		
@@ -428,7 +437,12 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.FrontLeft) && !thrusterActive(ThrustDirection.BackRight)) {
 				fireThruster(ThrustDirection.FrontLeft);
 				fireThruster(ThrustDirection.BackRight);
-				rotation.Y -= 1;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, -phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Right, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection*speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Left, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection*speedLimit);
 			}
 		}
 	
@@ -436,7 +450,12 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.FrontDown) && !thrusterActive(ThrustDirection.BackUp)) {
 				fireThruster(ThrustDirection.FrontDown);
 				fireThruster(ThrustDirection.BackUp);
-				rotation.X += 1;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, -phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Up, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Down, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
 			}
 		}
 
@@ -444,7 +463,12 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.FrontUp) && !thrusterActive(ThrustDirection.BackDown)) {
 				fireThruster(ThrustDirection.FrontUp);
 				fireThruster(ThrustDirection.BackDown);
-				rotation.X -= 1;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, -phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Down, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Up, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
 			}
 		}
 
@@ -452,7 +476,12 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.FrontDown) && !thrusterActive(ThrustDirection.BackDown)) {
 				fireThruster(ThrustDirection.FrontDown);
 				fireThruster(ThrustDirection.BackDown);
-				moment += Vector3.Transform(Vector3.Up, Orientation) * speedLimit;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, -phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Up, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Up, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
 			}
 		}
 
@@ -460,7 +489,12 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.FrontUp) && !thrusterActive(ThrustDirection.BackUp)) {
 				fireThruster(ThrustDirection.FrontUp);
 				fireThruster(ThrustDirection.BackUp);
-				moment += Vector3.Transform(Vector3.Down, Orientation) * speedLimit;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, -phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Down, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Down, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
 			}
 		}
 
@@ -468,7 +502,12 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.CenterLeftUp) && !thrusterActive(ThrustDirection.CenterRightDown)) {
 				fireThruster(ThrustDirection.CenterLeftUp);
 				fireThruster(ThrustDirection.CenterRightDown);
-				rotation.Z -= 1;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(-phyBody.HalfWidth, 0, 0), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Down, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(phyBody.HalfWidth, 0,0), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Up, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
 			}
 		}
 
@@ -476,7 +515,12 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.CenterLeftDown) && !thrusterActive(ThrustDirection.CenterRightUp)) {
 				fireThruster(ThrustDirection.CenterLeftDown);
 				fireThruster(ThrustDirection.CenterRightUp);
-				rotation.Z += 1;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(-phyBody.HalfWidth, 0, 0), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Up, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(phyBody.HalfWidth, 0, 0), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Down, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
 			}
 		}
 
@@ -484,7 +528,12 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.FrontRight) && !thrusterActive(ThrustDirection.BackRight)) {
 				fireThruster(ThrustDirection.FrontRight);
 				fireThruster(ThrustDirection.BackRight);
-				moment += Vector3.Transform(Vector3.Left, Orientation) * speedLimit;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, -phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Left, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Left, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
 			}
 		}
 
@@ -492,17 +541,23 @@ namespace Dreadnought {
 			if(!thrusterActive(ThrustDirection.FrontLeft) && !thrusterActive(ThrustDirection.BackLeft)) {
 				fireThruster(ThrustDirection.FrontLeft);
 				fireThruster(ThrustDirection.BackLeft);
-				moment += Vector3.Transform(Vector3.Right, Orientation) * speedLimit;
+				Vector3 worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, -phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				Vector3 worldDirection = Vector3.TransformNormal(Vector3.Right, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
+				worldPosition = phyBody.InternalCenterOfMass + Vector3.TransformNormal(new Vector3(0, 0, phyBody.HalfLength), phyBody.InternalOrientationMatrix);
+				worldDirection = Vector3.TransformNormal(Vector3.Right, phyBody.InternalOrientationMatrix);
+				phyBody.ApplyImpulse(worldPosition, worldDirection * speedLimit);
 			}
 		}
 
 		internal bool IsRotating() {
-			if(rotation.Length() > 0) return true;
+			if(phyBody.MotionState.AngularVelocity.Length() > 0)
+				return true;
 			return false;
 		}
 
 		internal bool IsMoving() {
-			if(moment.Length() > 0) return true;
+			if(phyBody.MotionState.LinearVelocity.Length() > 0) return true;
 			return false;
 		}
 		#endregion

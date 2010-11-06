@@ -11,6 +11,9 @@ using Microsoft.Xna.Framework.Media;
 using Dreadnought.Common;
 using System.Windows.Forms.Integration;
 using DreadnoughtUI;
+using BEPUphysics;
+using BEPUphysics.Entities;
+using Dreadnought.Common.Geometry;
 
 namespace Dreadnought {
 	public class Game : Microsoft.Xna.Framework.Game {
@@ -19,7 +22,10 @@ namespace Dreadnought {
 		private Ship ship;
 		private Grid grid;
 		public Sidemenu UI;
-		private Nullable<Vector3> faceDir;
+		private Vector3 faceDir;
+		private Space space;
+		private Box phycube;
+		private CubePrimitive cube;
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
@@ -66,15 +72,19 @@ namespace Dreadnought {
 			var fpsCntr = new FPSCounter(this);
 			fpsCntr.Updated += delegate { this.Window.Title = "Dreadnought  (FPS: " + fpsCntr.FPS.ToString() + " )"; };
 			Components.Add(fpsCntr);
-			// add ship
-			ship = new Ship(this);
-			Components.Add(ship);
-			// add Copilot
-			Components.Add(new BasicFlightHelper(this, ship));
+			
+			
 			// add grid
-			grid = new Grid(this);
+			//grid = new Grid(this);
 			Components.Add(grid);
 
+			space = new Space();
+
+			// add ship
+			ship = new Ship(this,space);
+			Components.Add(ship);
+			// add Copilot
+			//Components.Add(new BasicFlightHelper(this, ship));
 			base.Initialize();
 		}
 
@@ -82,17 +92,23 @@ namespace Dreadnought {
 			World = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
 			Camera = new Common.Camera(this);
 			Camera.Load(Content);
-			Camera.Position = new Vector3(1, 1000, 1);
+			Camera.Position = new Vector3(200, 200, 200);
 
+			//phycube = new Box(Vector3.Zero,100, 100, 640,10);
+			//cube = new CubePrimitive(GraphicsDevice, 100);
+
+			//space.Add(phycube);
 		}
 
 		protected override void UnloadContent() {
 		}
 
 		protected override void Update(GameTime gameTime) {
+			space.Update(gameTime);
 			KeyboardState ks = Keyboard.GetState(PlayerIndex.One);
 			MouseState ms = Mouse.GetState();
 
+			#region Ship Keys
 			if(ks.IsKeyDown(Keys.Escape)) {
 				this.Exit();
 			}
@@ -145,34 +161,52 @@ namespace Dreadnought {
 				ship.turnToFace(Vector3.Left);
 			}
 
-			if(faceDir != null) {
-				if(ship.turnToFace(faceDir.Value) == 3) {
-					faceDir = null;
+			//if(faceDir != null) {
+			//	if(ship.turnToFace(faceDir.Value) == 3) {
+			//		faceDir = null;
+			//	}
+			//}
+			#endregion
+			if(ks.IsKeyDown(Keys.NumPad4)){
+				phycube.IsActive = true;
+				phycube.AngularDamping = 0f;
+				phycube.LinearDamping = 1f;
+				phycube.ApplyAngularImpulse(Vector3.Right);
+			}
+
+			if(GraphicsDevice.Viewport.Bounds.Contains(ms.X,ms.Y)) {
+				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View,Camera.World);
+				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View,Camera.World);
+				faceDir = Vector3.Normalize(pos2 - pos1);
+				Vector3 loc;
+				Vector3 normal;
+				Entity ent;
+				float dist;
+				if(space.BroadPhase.RayCast(pos1, faceDir, 10000f, true,out ent,out loc,out normal,out dist)) {
+					normal.Normalize();
+					Camera.AddDebugVector(loc, loc+normal*10);
+					if(ms.LeftButton == ButtonState.Pressed) {
+						ent.ApplyImpulse(loc, normal*-10 ,true);
+					}
 				}
 			}
 
-			if(ms.LeftButton == ButtonState.Pressed && GraphicsDevice.Viewport.Bounds.Contains(ms.X,ms.Y)) {
-				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Camera.Projection, Camera.View, Camera.World);
-				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Camera.Projection, Camera.View, Camera.World);
-				faceDir = Vector3.Normalize(pos2 - ship.Position);
-			}
-
-			Camera.Up = Vector3.Transform(Vector3.Up, ship.Orientation);
-			Camera.Position = ship.Position + (Vector3.Transform(Vector3.Backward, ship.Orientation) * 3000) + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
-			Vector3 gp = new Vector3((float)Math.Round(ship.Position.X / grid.Scale), (float)Math.Round(ship.Position.Y / grid.Scale), (float)Math.Round(ship.Position.Z / grid.Scale));
-			grid.Position = new Vector3(-(grid.Size / 2f), -(grid.Size / 2f), -(grid.Size / 2f)) + gp;
-			Camera.LookAt = ship.Position + Vector3.Transform(Vector3.Up, ship.Orientation) * 500;
+			Camera.Up = Vector3.Up;
+			//Camera.Position = new Vector3(1, 1, 1) * 1000;
+			//Vector3 gp = new Vector3((float)Math.Round(ship.Position.X / grid.Scale), (float)Math.Round(ship.Position.Y / grid.Scale), (float)Math.Round(ship.Position.Z / grid.Scale));
+			//grid.Position = new Vector3(-(grid.Size / 2f), -(grid.Size / 2f), -(grid.Size / 2f)) + gp;
+			Camera.LookAt = Vector3.Zero;
 
 			//Camera.Position = Vector3.Transform(Camera.Position, Matrix.CreateTranslation(Vector3.Up));
 			//World *= Matrix.CreateRotationY(MathHelper.ToRadians(1f));
 			Camera.Update(gameTime);
 
+			
 			base.Update(gameTime);
 		}
 
 		protected override void Draw(GameTime gameTime) {
 			GraphicsDevice.Clear(Color.CornflowerBlue);
-
 			Camera.Draw();
 			base.Draw(gameTime);
 		}
