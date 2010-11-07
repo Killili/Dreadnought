@@ -29,7 +29,7 @@ namespace Dreadnought.Common {
         public Camera( Game game ) : base( game ) {
             Zoom = 1000;
         }
-
+/*
         internal void TurnRight( int x ) {
             reset = false;
             shipPos = ( (Game)Game ).ship.Position;
@@ -73,18 +73,17 @@ namespace Dreadnought.Common {
         internal void resetLook() {
             reset = true;
         }
-
+*/
         public override void Update( GameTime gameTime ) {
-            shipPos = ( (Game)Game ).ship.Position;
-            LookAt = shipPos;
+            LookAt = new Vector3( 0f, 0f, 0f );
             Projection = Matrix.CreatePerspectiveFieldOfView( MathHelper.PiOver4, ( (Game)Game ).GraphicsDevice.Viewport.AspectRatio, 1, 200000 );
             if(reset) {
                 Orientation = Quaternion.CreateFromAxisAngle( Vector3.Right, 45f );
-                Position = shipPos + new Vector3( 0f, 1000f, 1500f );
-                View = Matrix.CreateLookAt( Position, LookAt, Up );
+                Position = new Vector3( 0f, 1000f, 1500f );
+                View = Matrix.CreateLookAt( Position + LookAt, LookAt, Up );
             } else {
-                Position = shipPos + Vector3.Transform( Vector3.Backward * Zoom, Orientation );
-                View = Matrix.CreateLookAt( Position, LookAt, Up );
+                Position = Vector3.Transform( Vector3.Backward * Zoom, Orientation );
+                View = Matrix.CreateLookAt( Position + LookAt, LookAt, Up );
             }
             base.Update( gameTime );
         }

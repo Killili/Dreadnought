@@ -121,6 +121,7 @@
     <Compile Include="Common\Camera.cs" />
     <Compile Include="Common\Extensions.cs" />
     <Compile Include="Common\FPSCounter.cs" />
+    <Compile Include="Common\ParticlesEngine.cs" />
     <Compile Include="Common\SkySphere.cs" />
     <Compile Include="Grid.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
