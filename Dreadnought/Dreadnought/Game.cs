@@ -171,9 +171,9 @@ namespace Dreadnought {
                 }
                 Mouse.SetPosition( GraphicsDevice.Viewport.Bounds.Center.X, GraphicsDevice.Viewport.Bounds.Center.Y );
                 if(x > 0) {
-                    Camera.TurnRight( x );
+                    Camera.TurnRight( -x );
                 } else if(x < 0) {
-                    Camera.TurnLeft( -x );
+                    Camera.TurnLeft( x );
                 }
                 if(y < 0) {
                     Camera.TurnUp( y );

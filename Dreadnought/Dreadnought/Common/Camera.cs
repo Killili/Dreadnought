@@ -49,21 +49,25 @@ namespace Dreadnought.Common {
         }
 
         internal void TurnUp( int y ) {
-            reset = false;
-            shipPos = ( (Game)Game ).ship.Position;
-            Quaternion rotation = Quaternion.CreateFromAxisAngle( Vector3.Left, MathHelper.ToRadians( y / 2f ) );
-            Quaternion.Concatenate( ref Orientation, ref rotation, out Orientation );
-            Orientation.Normalize();
-            LookAt = shipPos;
+            if(Vector3.Dot( Vector3.Up, Position ) < 980f) {    // fix northpole dilemma
+                reset = false;
+                shipPos = ( (Game)Game ).ship.Position;
+                Quaternion rotation = Quaternion.CreateFromAxisAngle( Vector3.Normalize( Vector3.Cross( Vector3.Up, Position ) ), MathHelper.ToRadians( y / 2f ) );
+                Quaternion.Concatenate( ref Orientation, ref rotation, out Orientation );
+                Orientation.Normalize();
+                LookAt = shipPos;
+            }
         }
 
         internal void TurnDown( int y ) {
-            reset = false;
-            shipPos = ( (Game)Game ).ship.Position;
-            Quaternion rotation = Quaternion.CreateFromAxisAngle( Vector3.Right, MathHelper.ToRadians( y / 2f ) );
-            Quaternion.Concatenate( ref Orientation, ref rotation, out Orientation );
-            Orientation.Normalize();
-            LookAt = shipPos;
+            if(Vector3.Dot( Vector3.Up, Position ) > -980f) {   // fix southpole dilemma
+                reset = false;
+                shipPos = ( (Game)Game ).ship.Position;
+                Quaternion rotation = Quaternion.CreateFromAxisAngle( Vector3.Normalize( Vector3.Cross( Position, Vector3.Up ) ), MathHelper.ToRadians( y / 2f ) );
+                Quaternion.Concatenate( ref Orientation, ref rotation, out Orientation );
+                Orientation.Normalize();
+                LookAt = shipPos;
+            }
         }
 
         internal void resetLook() {
