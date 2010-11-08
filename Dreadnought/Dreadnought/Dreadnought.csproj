@@ -118,12 +118,17 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Base\UniversalPosition.cs" />
     <Compile Include="Common\Camera.cs" />
     <Compile Include="Common\Extensions.cs" />
     <Compile Include="Common\FPSCounter.cs" />
     <Compile Include="Common\Shadow.cs" />
     <Compile Include="Common\SkySphere.cs" />
+    <Compile Include="Base\Entity.cs" />
     <Compile Include="Grid.cs" />
+    <Compile Include="Helper\Cockpit.cs" />
+    <Compile Include="Helper\FlightAssist.cs" />
+    <Compile Include="Helper\Pilot.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Game.cs" />

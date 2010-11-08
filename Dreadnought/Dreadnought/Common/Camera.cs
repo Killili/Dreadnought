@@ -8,21 +8,22 @@ using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
+using Dreadnought.Base;
 
 
 namespace Dreadnought.Common {
-	public class Camera : GameComponent {
+	public class Camera : Entity {
 
-		public Vector3 Position = Vector3.Forward;
 		public Quaternion Orientation = Quaternion.CreateFromAxisAngle(Vector3.Left, 40f);
 		public Matrix World;
 		public Matrix View;
 		public Matrix Projection;
 
 		public Vector3 Up = Vector3.Up;
-		
-		private Vector3 _lookAt;
-		public Vector3 LookAt {
+		private Vector3 offset;
+		private Point oldMousePos;
+		private UniversalPosition _lookAt;
+		public UniversalPosition LookAt {
 			get { return _lookAt; }
 			set {
 				_lookAt = value;
@@ -31,6 +32,7 @@ namespace Dreadnought.Common {
 		}
 
 		private float _zoom;
+		private int oldScrollWheelValue;
 		public float Zoom {
 			get { return _zoom; }
 			set {
@@ -39,9 +41,49 @@ namespace Dreadnought.Common {
 			}
 		}
 
-		public Camera(Game game)
-			: base(game) {
+		public Camera()
+			: base() {
+				_lookAt = new UniversalPosition();
 			resetLook();
+			Game.RegisterMouseAction(this);
+		}
+
+		public override void MouseAction(GameTime gametime, MouseState ms) {
+			if(ms.RightButton == ButtonState.Pressed && GraphicsDevice.Viewport.Bounds.Contains(ms.X, ms.Y)) {
+
+				int x = ms.X - GraphicsDevice.Viewport.Bounds.Center.X;
+				int y = ms.Y - GraphicsDevice.Viewport.Bounds.Center.Y;
+				if(Game.IsMouseVisible) {
+					Game.IsMouseVisible = false;
+					oldMousePos.X = ms.X;
+					oldMousePos.Y = ms.Y;
+					x = 0;
+					y = 0;
+				}
+				Mouse.SetPosition(GraphicsDevice.Viewport.Bounds.Center.X, GraphicsDevice.Viewport.Bounds.Center.Y);
+				if(x > 0) {
+					TurnRight(-x);
+				} else if(x < 0) {
+					TurnLeft(x);
+				}
+				if(y < 0) {
+					TurnUp(y);
+				} else if(y > 0) {
+					TurnDown(-y);
+				}
+
+			}
+			if(ms.ScrollWheelValue != oldScrollWheelValue) {
+				// TODO: Fix Scrollwheel
+				Zoom = ms.ScrollWheelValue - oldScrollWheelValue;
+			}
+
+			if(ms.RightButton == ButtonState.Released && GraphicsDevice.Viewport.Bounds.Contains(ms.X, ms.Y)) {
+				if(!Game.IsMouseVisible) {
+					Mouse.SetPosition(oldMousePos.X, oldMousePos.Y);
+					Game.IsMouseVisible = true;
+				}
+			}
 		}
 
 		internal void TurnRight(int x) {
@@ -53,14 +95,14 @@ namespace Dreadnought.Common {
 		}
 
 		internal void TurnUp(int y) {
-			if(Vector3.Dot(Vector3.Up, Vector3.Normalize(Position)) < 0.980f) {    // fix northpole dilemma
-				addRotation(Quaternion.CreateFromAxisAngle(Vector3.Normalize(Vector3.Cross(Vector3.Up, Position)), MathHelper.ToRadians(y / 2f)));
+			if(Vector3.Dot(Vector3.Up, Vector3.Normalize(offset)) < 0.980f) {    // fix northpole dilemma
+				addRotation(Quaternion.CreateFromAxisAngle(Vector3.Normalize(Vector3.Cross(Vector3.Up, offset)), MathHelper.ToRadians(y / 2f)));
 			}
 		}
 
 		internal void TurnDown(int y) {
-			if(Vector3.Dot(Vector3.Up, Vector3.Normalize(Position)) > -0.980f) {   // fix southpole dilemma
-				addRotation(Quaternion.CreateFromAxisAngle(Vector3.Normalize(Vector3.Cross(Position, Vector3.Up)), MathHelper.ToRadians(y / 2f)));
+			if(Vector3.Dot(Vector3.Up, Vector3.Normalize(offset)) > -0.980f) {   // fix southpole dilemma
+				addRotation(Quaternion.CreateFromAxisAngle(Vector3.Normalize(Vector3.Cross(offset, Vector3.Up)), MathHelper.ToRadians(y / 2f)));
 			}
 		}
 
@@ -78,13 +120,10 @@ namespace Dreadnought.Common {
 
 		private void updateMatrices() {
 			Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, ((Game)Game).GraphicsDevice.Viewport.AspectRatio, 1, 200000);
-			Position = Vector3.Transform(Vector3.Backward * _zoom, Orientation);
-			View = Matrix.CreateLookAt(Position + _lookAt, _lookAt, Up);
-			World = Matrix.CreateWorld(LookAt, Vector3.Forward, Vector3.Up);
+			offset = Vector3.Transform(Vector3.Backward * _zoom, Orientation);
+			View = Matrix.CreateLookAt(offset + _lookAt.Local, _lookAt.Local, Up);
+			World = Matrix.CreateWorld(LookAt.Local, Vector3.Forward, Vector3.Up);
 		}
 
-		public override void Update(GameTime gameTime) {
-			base.Update(gameTime);
-		}
 	}
 }

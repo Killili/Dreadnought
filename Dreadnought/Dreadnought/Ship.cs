@@ -7,60 +7,10 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using DreadnoughtUI;
 using Dreadnought.Common;
+using Dreadnought.Base;
 
 namespace Dreadnought {
-	class BasicFlightHelper : GameComponent {
-		private TimeSpan lastUpdate;
-		private TimeSpan timeout;
-		private Ship ship;
-		private bool ignoreEvents;
-		private double desiredSpeed;
-
-		public BasicFlightHelper(Game game,Ship ship):base(game) {
-			this.ship = ship;
-			ship.Thrust += thrustEvent;
-			((Game)Game).UI.Orders += OrderHandler;
-		}
-
-		public override void Update(GameTime gameTime) {
-			lastUpdate = gameTime.TotalGameTime;
-			if(timeout < lastUpdate) {
-				if(ship.IsRotating()) {
-					ignoreEvents = true;
-					ship.counterRotation();
-					ignoreEvents = false;
-				} else if(ship.IsMoving()) {
-					ignoreEvents = true;
-					ship.counterMoment();
-					ignoreEvents = false;
-				}
-				if(ship.Speed.Z > desiredSpeed && ship.Speed.Z < 0 ) {
-					ignoreEvents = true;
-					//ship.accelerate();
-					ignoreEvents = false;
-				} else if(ship.Speed.Z < desiredSpeed-1 || ship.Speed.Z > 0) {
-					ignoreEvents = true;
-					//ship.decelerate();
-					ignoreEvents = false;
-				}
-			}
-		}
-		
-		private void OrderHandler(object sender, DreadnoughtUI.OrderEventArgs order) {
-			Console.WriteLine("AyAy");
-			desiredSpeed = order.Speed * -1;
-		}
-
-		public void thrustEvent(object sender,EventArgs args) {
-			if(!ignoreEvents) {
-				//if(dir != Thruster.ThrustDirection.Forward) {
-					timeout = lastUpdate + TimeSpan.FromSeconds(0.1);
-				//}
-			}
-		}
-	}
-
-	class Ship : Microsoft.Xna.Framework.DrawableGameComponent {
+	class Ship : Entity {
 		#region Fileds and Constructors
 		
 		//internal stuff
@@ -79,10 +29,9 @@ namespace Dreadnought {
 
 		//external stuff
 		public enum ThrustDirection { Forward, Backward, FrontLeft, FrontRight, BackLeft, BackRight, FrontUp, FrontDown, BackUp, BackDown, CenterLeftUp, CenterLeftDown, CenterRightUp, CenterRightDown }
-		public Vector3 Position = new Vector3(0.0f);
 		public Vector3 Speed = new Vector3(0.0f);
 		public Quaternion Orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0);
-		public BoundingBox BoundingBox = new BoundingBox(new Vector3(-80, -70, 370), new Vector3(80, 100, -370));
+		public BoundingBox BoundingBox = new BoundingBox(new Vector3(-8, -10, 37), new Vector3(8, 10, -37));
 
 		//constant stuff
 		private static double turnConst = Math.PI / (360*100) ;
@@ -90,14 +39,17 @@ namespace Dreadnought {
 		private static long thrusterBurnTime = TimeSpan.FromSeconds(1.0 / 60.0).Ticks;
 		private Shadow shadow;
 		
-		public Ship(Game game)
-			: base(game) {
-			Enabled = true;
+		public Ship(){
+			Position = new UniversalPosition();
+			Game.RegisterPreDraw(this);
+			Game.RegisterUpdate(this);
+			Game.RegisterDraw(this);
+			LoadContent();
 		}
 		#endregion
 
 		#region GameComponent
-		protected override void LoadContent() {
+		private void LoadContent() {
 			model = Game.Content.Load<Model>("Ship");
 			//texture = content.Load<Texture2D>("ShipTexture");
 			transforms = new Matrix[model.Bones.Count];
@@ -109,7 +61,7 @@ namespace Dreadnought {
 
 		public override void Update(GameTime gt) {
 			gameTime = gt.TotalGameTime.Ticks;
-			Position += moment;
+			Position.Local += moment;
 			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, (float)(rotation.Y * turnConst)));
 			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, (float)(rotation.X * turnConst)));
 			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Forward, (float)(rotation.Z * turnConst)));
@@ -117,7 +69,7 @@ namespace Dreadnought {
 			Speed = Vector3.Transform(moment, Orientation);
 
 
-			model.Root.Transform = Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(Position);
+			model.Root.Transform =  Matrix.CreateFromQuaternion(Orientation) * Matrix.CreateTranslation(Position.Local);
 			model.Bones["Radar"].Transform *= Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(1.5f));
 
 			model.CopyAbsoluteBoneTransformsTo(transforms);
@@ -213,7 +165,7 @@ namespace Dreadnought {
 		}
 
 
-		public void DrawShadow() {
+		public override void PreDraw(GameTime gt) {
 			shadow.CreateShadowMap();
 		}
 		public override void Draw(GameTime gt) {
@@ -223,7 +175,7 @@ namespace Dreadnought {
 
 		public void DrawGeometry() {
 			foreach(ModelMesh mesh in shipModel) {
-				shadow.Effect.Parameters["World"].SetValue( transforms[mesh.ParentBone.Index] );
+				shadow.Effect.Parameters["World"].SetValue(transforms[mesh.ParentBone.Index]);
 				mesh.Draw();
 			}
 		}

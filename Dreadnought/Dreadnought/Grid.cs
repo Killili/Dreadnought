@@ -68,8 +68,8 @@ namespace Dreadnought {
         }
 
         public override void Update( GameTime gameTime ) {
-            v = ( (Game)Game ).Ship.Position;
-            Matrix World = Matrix.CreateWorld( Position, Vector3.Forward, Vector3.Up ) * Matrix.CreateScale( Scale );
+			  v = Vector3.Zero;
+            Matrix World =  Matrix.CreateScale( Scale )*Matrix.CreateWorld( Position, Vector3.Forward, Vector3.Up );
             effect.Parameters["BlendPoint"].SetValue( v );
             effect.Parameters["Near"].SetValue( 5000f );
             effect.Parameters["Far"].SetValue( 15000f );

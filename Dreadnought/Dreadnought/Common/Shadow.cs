@@ -20,8 +20,8 @@ namespace Dreadnought.Common {
 			this.game = game;
 			this.ship = ship;
 			Map = new RenderTarget2D(game.GraphicsDevice,
-																	 1024,
-																	 1024,
+																	 2048,
+																	 2048,
 																	 false,
 																	 SurfaceFormat.Single,
 																	 DepthFormat.Depth24);
@@ -52,7 +52,7 @@ namespace Dreadnought.Common {
 			// the light position by the inverse of the lights rotation
 			lightPosition = Vector3.Transform(lightPosition,
 														 Matrix.Invert(lightRotation));
-			lightPosition += ship.Position;
+			lightPosition += ship.Position.Local;
 			// Create the view matrix for the light
 			Matrix lightView = Matrix.CreateLookAt(lightPosition,
 																lightPosition - game.SunDirection,
