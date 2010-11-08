@@ -11,93 +11,80 @@ using Microsoft.Xna.Framework.Media;
 
 
 namespace Dreadnought.Common {
-	public class Camera {
+	public class Camera : GameComponent {
 
-		public Vector3 Position { get; set; }
-		public Vector3 LookAt { get; set; }
+		public Vector3 Position = Vector3.Forward;
+		public Quaternion Orientation = Quaternion.CreateFromAxisAngle(Vector3.Left, 40f);
+		public Matrix World;
+		public Matrix View;
+		public Matrix Projection;
 
-		public Matrix View { get; private set; }
-		public Matrix Projection { get; private set; }
-		public Matrix World { get; private set; }
-
-		Game game;
-		SkySphere background;
-		private Vector3 lookAt;
-		private List<VertexPositionColor> pointList;
-		private List<short> pointOrder;
-		private BasicEffect effect;
-		public Vector3 Up;
-
-		public Camera(Game game) {
-			this.game = game;
-			Position = new Vector3(500, 500, 500);
-			pointList = new List<VertexPositionColor>();
-			pointOrder = new List<short>();
-			LookAt = Vector3.Zero;
-			Up = Vector3.Up;
-		}
-
-
-		public void Load(ContentManager content) {
-			background = new SkySphere(game);
-			background.Load(content);
-			effect = new BasicEffect(game.GraphicsDevice);
-			effect.VertexColorEnabled = true;
-			effect.World = game.World;
-		}
-
-		public void Update(GameTime gameTime) {
-			World = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
-			View = Matrix.CreateLookAt(Position, LookAt, Up);
-			Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, game.GraphicsDevice.Viewport.AspectRatio, 1, 200000);
-
-			effect.World = Matrix.CreateWorld(Vector3.Zero,Vector3.Forward,Vector3.Up);
-			effect.View = View;
-			effect.Projection = Projection;
-
-			background.Update(gameTime);
-		}
-
-		public void AddDebugVector(Vector3 v) {
-			AddDebugVector(Vector3.Zero, v);
-		}
-
-		public void AddDebugVector(Vector3 v1, Vector3 v2) {
-			Vector3 v = Vector3.Normalize(v2 - v1);
-			Color color = new Color(Math.Abs(v.X), Math.Abs(v.Y), Math.Abs(v.Z));
-
-			pointList.Add(new VertexPositionColor(v1, color));
-			pointList.Add(new VertexPositionColor(v2, color));
-			pointOrder.Add((short)(pointList.Count - 2));
-			pointOrder.Add((short)(pointList.Count - 1));
-		}
-
-		public void AddDebugStar(Matrix m) {
-			Vector3 c = Vector3.Transform(Vector3.Zero, m);
-			AddDebugVector(c, c + (m.Right * 400));
-			AddDebugVector(c, c + (m.Up * 400));
-			AddDebugVector(c, c + (m.Forward * 400));
-		}
-
-		public void Draw() {
-			background.Draw();
-			if(pointOrder.Count >= 2) {
-				foreach(EffectPass pass in effect.CurrentTechnique.Passes) {
-					pass.Apply();
-
-					game.GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>(
-						 PrimitiveType.LineList,
-						 pointList.ToArray(),
-						 0,  // vertex buffer offset to add to each element of the index buffer
-						 pointList.Count,  // number of vertices in pointList
-						 pointOrder.ToArray(),  // the index buffer
-						 0,  // first index element to read
-						 pointOrder.Count / 2  // number of primitives to draw
-					);
-				}
-				pointList.Clear();
-				pointOrder.Clear();
+		public Vector3 Up = Vector3.Up;
+		
+		private Vector3 _lookAt;
+		public Vector3 LookAt {
+			get { return _lookAt; }
+			set {
+				_lookAt = value;
+				updateMatrices();
 			}
+		}
+
+		private float _zoom;
+		public float Zoom {
+			get { return _zoom; }
+			set {
+				_zoom = 1000 + value;
+				updateMatrices();
+			}
+		}
+
+		public Camera(Game game)
+			: base(game) {
+			resetLook();
+		}
+
+		internal void TurnRight(int x) {
+			addRotation(Quaternion.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(x / 4f)));
+		}
+
+		internal void TurnLeft(int x) {
+			addRotation(Quaternion.CreateFromAxisAngle(Vector3.Down, MathHelper.ToRadians(x / 4f)));
+		}
+
+		internal void TurnUp(int y) {
+			if(Vector3.Dot(Vector3.Up, Vector3.Normalize(Position)) < 0.980f) {    // fix northpole dilemma
+				addRotation(Quaternion.CreateFromAxisAngle(Vector3.Normalize(Vector3.Cross(Vector3.Up, Position)), MathHelper.ToRadians(y / 2f)));
+			}
+		}
+
+		internal void TurnDown(int y) {
+			if(Vector3.Dot(Vector3.Up, Vector3.Normalize(Position)) > -0.980f) {   // fix southpole dilemma
+				addRotation(Quaternion.CreateFromAxisAngle(Vector3.Normalize(Vector3.Cross(Position, Vector3.Up)), MathHelper.ToRadians(y / 2f)));
+			}
+		}
+
+		internal void resetLook() {
+			Orientation = Quaternion.CreateFromAxisAngle(Vector3.Right, 45f);
+			_zoom = 1000f;
+			updateMatrices();
+		}
+
+		private void addRotation(Quaternion rot) {
+			Quaternion.Concatenate(ref Orientation, ref rot, out Orientation);
+			Orientation.Normalize();
+			updateMatrices();
+		}
+
+		private void updateMatrices() {
+			Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, ((Game)Game).GraphicsDevice.Viewport.AspectRatio, 1, 200000);
+			Position = Vector3.Transform(Vector3.Backward * _zoom, Orientation);
+			View = Matrix.CreateLookAt(Position + _lookAt, _lookAt, Up);
+			World = Matrix.CreateWorld(LookAt, Vector3.Forward, Vector3.Up);
+		}
+
+		public override void Update(GameTime gameTime) {
+			base.Update(gameTime);
 		}
 	}
 }

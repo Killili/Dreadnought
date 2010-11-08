@@ -12,7 +12,7 @@ float4x4 LightViewProj;
 float3 LightDirection;
 float4 AmbientColor = float4(0.05, 0.05, 0.05, 0);
 float4 PointLight1;
-float DepthBias = 0.003f;
+float DepthBias = 0.01f;
 
 texture Texture;
 sampler TextureSampler = sampler_state
@@ -65,7 +65,7 @@ CreateShadowMap_VSOut CreateShadowMap_VertexShader(float4 Position: POSITION)
 {
     CreateShadowMap_VSOut Out;
     Out.Position = mul(Position, mul(World, LightViewProj)); 
-    Out.Depth = Out.Position.z; //+ Out.Position.w;    
+    Out.Depth = Out.Position.z / Out.Position.w;    
     return Out;
 }
 
@@ -110,16 +110,16 @@ float4 DrawWithShadowMap_PixelShader(DrawWithShadowMap_PSIn input) : COLOR
 
     // Get the current depth stored in the shadow map
     float shadowdepth = tex2D(ShadowMapSampler, ShadowTexCoord).r; 
-	 float ourdepth = lightingPosition.z - DepthBias;
+	 float ourdepth = (lightingPosition.z / lightingPosition.w) - DepthBias;
 
-	 if (shadowdepth <= ourdepth){
-		diffuse = AmbientColor;
-	 } else {
+	 //if (shadowdepth <= ourdepth){
+		//diffuse = AmbientColor;
+	 //} else {
       diffuseColor = float4( 0.75 , 0.75 , 0.75 , 1 );//tex2D(TextureSampler, input.TexCoord);
 		diffuseIntensity = saturate(dot(LightDirection, input.Normal));
 		diffuse = diffuseIntensity * diffuseColor + AmbientColor;
 		//diffuse = diffuseColor + AmbientColor;
-    };
+    //};
 
     return diffuse;
 }
