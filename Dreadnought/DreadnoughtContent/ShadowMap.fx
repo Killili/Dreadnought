@@ -6,7 +6,8 @@
 //-----------------------------------------------------------------------------
 
 float4x4 World;
-float4x4 GameViewProj;
+float4x4 GameWorldViewProj;
+float4x4 LightWorldViewProj;
 float4x4 LightViewProj;
 
 float3 LightDirection;
@@ -64,7 +65,7 @@ struct CreateShadowMap_VSOut
 CreateShadowMap_VSOut CreateShadowMap_VertexShader(float4 Position: POSITION)
 {
     CreateShadowMap_VSOut Out;
-    Out.Position = mul(Position, mul(World, LightViewProj)); 
+    Out.Position = mul(Position, LightWorldViewProj); 
     Out.Depth = Out.Position.z;// / Out.Position.w;    
     return Out;
 }
@@ -81,7 +82,7 @@ DrawWithShadowMap_VSOut DrawWithShadowMap_VertexShader(DrawWithShadowMap_VSIn in
     DrawWithShadowMap_VSOut Output;
 	  
     // Transform the models verticies and normal
-    Output.Position = mul(input.Position, mul(World,GameViewProj));
+    Output.Position = mul(input.Position,GameWorldViewProj);
     Output.Normal =  normalize(mul(input.Normal, World));
     Output.TexCoord = input.TexCoord;
     

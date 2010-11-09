@@ -14,7 +14,7 @@ using Dreadnought.Base;
 namespace Dreadnought.Common {
 	public class Camera : Entity {
 
-		public Quaternion Orientation = Quaternion.CreateFromAxisAngle(Vector3.Left, 40f);
+		public Quaternion Orientation;
 		public Matrix World;
 		public Matrix View;
 		public Matrix Projection;
@@ -107,7 +107,7 @@ namespace Dreadnought.Common {
 		}
 
 		internal void resetLook() {
-			Orientation = Quaternion.CreateFromAxisAngle(Vector3.Right, 45f);
+			Orientation = Quaternion.CreateFromAxisAngle(Vector3.Left, MathHelper.ToRadians(45));
 			_zoom = 1000f;
 			updateMatrices();
 		}

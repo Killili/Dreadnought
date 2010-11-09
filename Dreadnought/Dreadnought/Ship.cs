@@ -176,6 +176,8 @@ namespace Dreadnought {
 		public void DrawGeometry() {
 			foreach(ModelMesh mesh in shipModel) {
 				shadow.Effect.Parameters["World"].SetValue(transforms[mesh.ParentBone.Index]);
+				shadow.Effect.Parameters["GameWorldViewProj"].SetValue(transforms[mesh.ParentBone.Index]* Game.Camera.View * Game.Camera.Projection );
+				shadow.Effect.Parameters["LightWorldViewProj"].SetValue(transforms[mesh.ParentBone.Index] * shadow.View * shadow.Projection);
 				mesh.Draw();
 			}
 		}

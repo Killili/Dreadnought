@@ -20,8 +20,8 @@ namespace Dreadnought.Common {
 			this.game = game;
 			this.ship = ship;
 			Map = new RenderTarget2D(game.GraphicsDevice,
-																	 2048,
-																	 2048,
+																	 512,
+																	 512,
 																	 false,
 																	 SurfaceFormat.Single,
 																	 DepthFormat.Depth24);
@@ -75,9 +75,7 @@ namespace Dreadnought.Common {
 			//game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
 			Effect.CurrentTechnique = Effect.Techniques["CreateShadowMap"];
-			Effect.Parameters["World"].SetValue(game.World);
 			Effect.Parameters["LightDirection"].SetValue(game.SunDirection);
-			Effect.Parameters["GameViewProj"].SetValue(game.Camera.View * game.Camera.Projection);
 			Effect.Parameters["LightViewProj"].SetValue(View * Projection);
 			
 
@@ -91,9 +89,6 @@ namespace Dreadnought.Common {
 
 		public void DrawWithShadowMap() {
 			Effect.CurrentTechnique = Effect.Techniques["DrawWithShadowMap"];
-			Effect.Parameters["World"].SetValue(game.World);
-			Effect.Parameters["LightDirection"].SetValue(game.SunDirection);
-			Effect.Parameters["GameViewProj"].SetValue(game.Camera.View * game.Camera.Projection);
 			Effect.Parameters["LightViewProj"].SetValue(View * Projection);
 			Effect.Parameters["ShadowMap"].SetValue(Map);
 			game.GraphicsDevice.SamplerStates[1] = SamplerState.PointClamp;
