@@ -26,6 +26,9 @@
 				der gewinner kann den verlierer plündern
 	NTH: wegpunkte beim navigieren
 	
+##schadensmodell
+	jedes schiff besteht aus bauteilen, zB front-, mittel-, heckteil
+	jedes teil hat seine eigene hp (bei 0hp verliert es seine funktion?)
 
 ##ohne techtree, alles ist verfügbar, muss nur gefunden/gebaut werden
 ##bauen mit salvaged zeug:
