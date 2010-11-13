@@ -21,11 +21,10 @@ namespace Dreadnought {
 		internal Ship Ship;
 		private Grid grid;
 		public Sidemenu UI;
-		private Nullable<Vector3> faceDir;
-		private Point oldMousePos;
-
+		
 		private List<Entity> drawList = new List<Entity>();
 		private List<Entity> preDrawList = new List<Entity>();
+		private List<Entity> drawOverlayList = new List<Entity>();
 		private List<Entity> updateList = new List<Entity>();
 		private List<Entity> keyboardActionList = new List<Entity>();
 		private List<Entity> mouseActionList = new List<Entity>();
@@ -33,8 +32,7 @@ namespace Dreadnought {
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
 		public Vector3 SunDirection = Vector3.Right;
-		private int oldScrollWheelValue;
-
+		public SpriteBatch Overlay;
 		#region Config and Windows
 		private void config() {
 #if !DEBUG
@@ -72,6 +70,7 @@ namespace Dreadnought {
 
 		protected override void Initialize() {
 			init();
+			Overlay = new SpriteBatch(GraphicsDevice);
 			// Init Camera
 			Camera = new Common.Camera();
 			// init fps counter
@@ -86,9 +85,8 @@ namespace Dreadnought {
 			new FlightAssist(Ship);
 
 			// add grid
-			grid = new Grid(this);
-			Components.Add(grid);
-
+			grid = new Grid();
+			
 			base.Initialize();
 		}
 
@@ -115,9 +113,11 @@ namespace Dreadnought {
 
 
 			//Vector3 gp = Ship.Position.CameraSpace(Camera)/(int)grid.Scale;
-			UniversalPosition gp = new UniversalPosition();
-			gp.Local += new Vector3(-((grid.Scale*grid.Size) / 2));
-			grid.Position = gp.CameraSpace(Camera);
+			
+			//grid.Position = gp.CameraSpace(Camera);
+			if(grid.Position.DistanceTo(Camera.LookAt) >= grid.Scale) {
+				grid.Position = new UniversalCoordinate( Ship.Position );
+			}
 			Camera.LookAt = Ship.Position;
 
 			
@@ -139,6 +139,10 @@ namespace Dreadnought {
 
 			drawList.Each(ent => ent.Draw(gameTime));
 
+			Overlay.Begin(0, BlendState.Opaque, SamplerState.PointClamp, null, null);
+			drawOverlayList.Each(ent => ent.DrawOverlay(gameTime));
+			Overlay.End();
+
 			base.Draw(gameTime);
 			
 		}
@@ -153,6 +157,10 @@ namespace Dreadnought {
 
 		internal void RegisterDraw(Base.Entity entity) {
 			drawList.Add(entity);
+		}
+
+		internal void RegisterOverlay(Base.Entity entity) {
+			drawOverlayList.Add(entity);
 		}
 
 		internal void RegisterMouseAction(Base.Entity entity) {

@@ -13,7 +13,6 @@ namespace Dreadnought.Common {
 		public Matrix Projection;
 		Game game;
 		Ship ship;
-		private SpriteBatch spriteBatch;
 		public Effect Effect;
 
 		public Shadow(Game game,Ship ship){
@@ -25,7 +24,6 @@ namespace Dreadnought.Common {
 																	 false,
 																	 SurfaceFormat.Single,
 																	 DepthFormat.Depth24);
-			spriteBatch = new SpriteBatch(game.GraphicsDevice);
 			Effect = game.Content.Load<Effect>("ShadowMap");
 		}
 
@@ -97,9 +95,6 @@ namespace Dreadnought.Common {
 		}
 
 		void drawShadowMapToScreen() {
-			spriteBatch.Begin(0, BlendState.Opaque, SamplerState.PointClamp, null, null);
-			spriteBatch.Draw(Map, new Rectangle(500, 0, 128, 128), Color.White);
-			spriteBatch.End();
 			game.GraphicsDevice.BlendState = BlendState.Opaque;
 			game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 			game.GraphicsDevice.Textures[0] = null;

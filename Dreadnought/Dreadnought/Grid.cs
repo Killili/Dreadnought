@@ -5,25 +5,24 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Dreadnought.Base;
 
 namespace Dreadnought {
-    class Grid :Microsoft.Xna.Framework.DrawableGameComponent {
+    class Grid : Entity {
 
         private Effect effect;
         private List<VertexPositionColor> pointList;
         private List<short> pointOrder;
-        public Vector3 Position;
-        public float Scale;
+			public float Scale;
         public int Size;
 
-        Vector3 v;
-
-        public Grid( Game game )
-            : base( game ) {
+        public Grid()
+            : base() {
             pointList = new List<VertexPositionColor>();
             pointOrder = new List<short>();
             Scale = 5000f;
             Size = 10;
+			  Position = new UniversalCoordinate();
 
             // fill list with vertices
             // dont try to put both inner for-llops into one
@@ -60,33 +59,23 @@ namespace Dreadnought {
             for( short i = (short)( Size+1 * ( ( ( Size + 1 ) * 4 ) ) ); i < pointList.Count; i++ ) {
                 pointOrder.Add( i );
             }
-
+				LoadContent();
+				Game.RegisterDraw(this);
         }
 
-        protected override void LoadContent() {
-            effect = ( (Game)Game ).Content.Load<Effect>( "GridEffect" );
-        }
-
-        public override void Update( GameTime gameTime ) {
-			  v = Vector3.Zero;
-            Matrix World =  Matrix.CreateScale( Scale )*Matrix.CreateWorld( Position, Vector3.Forward, Vector3.Up );
-            effect.Parameters["BlendPoint"].SetValue( v );
-            effect.Parameters["Near"].SetValue( 5000f );
-            effect.Parameters["Far"].SetValue( 15000f );
-            effect.Parameters["gWVP"].SetValue( World * ( (Game)Game ).Camera.View * ( (Game)Game ).Camera.Projection );
-            effect.Parameters["gWorld"].SetValue( World );
-            effect.Parameters["Color"].SetValue( new Vector4( 0f, 0f, 0.6f, 0.3f ) );
-            base.Update( gameTime );
+        private void LoadContent() {
+            effect = Game.Content.Load<Effect>( "GridEffect" );
+				effect.Parameters["Near"].SetValue(5000f);
+				effect.Parameters["Far"].SetValue(15000f);
+				effect.Parameters["Color"].SetValue(new Vector4(0f, 0f, 0.6f, 0.3f));
         }
 
         public override void Draw( GameTime gameTime ) {
-            //( (Game)Game ).GraphicsDevice.RasterizerState = RasterizerState.CullNone;
 			  GraphicsDevice.BlendState = BlendState.NonPremultiplied;
-			  //GraphicsDevice.BlendState.AlphaSourceBlend = Blend.SourceAlpha;
-			  //GraphicsDevice.BlendState.AlphaDestinationBlend = Blend.InverseSourceAlpha;
-			  //AlphaBlendEnable = true;
-			  //SrcBlend = SrcAlpha;
-			  //DestBlend = InvSrcAlpha;
+			  Matrix world = Matrix.CreateScale(Scale) * Matrix.CreateWorld(Position.CameraSpace(Game.Camera), Vector3.Forward, Vector3.Up) * Matrix.CreateTranslation(new Vector3(-((Size / 2f) * Scale)));
+			  effect.Parameters["BlendPoint"].SetValue(Vector3.Zero);
+			  effect.Parameters["gWVP"].SetValue(world * Game.Camera.View * Game.Camera.Projection);
+			  effect.Parameters["gWorld"].SetValue(world);
             foreach( EffectPass pass in effect.CurrentTechnique.Passes ) {
                 pass.Apply();
                 GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionColor>(
@@ -99,7 +88,6 @@ namespace Dreadnought {
                     pointOrder.Count / 2 );
             }
 				GraphicsDevice.BlendState = BlendState.Opaque;
-				//GraphicsDevice.DepthStencilState = DepthStencilState.Default;
         }
     }
 }

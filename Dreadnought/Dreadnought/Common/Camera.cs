@@ -22,8 +22,8 @@ namespace Dreadnought.Common {
 		public Vector3 Up = Vector3.Up;
 		private Vector3 offset;
 		private Point oldMousePos;
-		private UniversalPosition _lookAt;
-		public UniversalPosition LookAt {
+		private UniversalCoordinate _lookAt;
+		public UniversalCoordinate LookAt {
 			get { return _lookAt; }
 			set {
 				_lookAt = value;
@@ -43,7 +43,7 @@ namespace Dreadnought.Common {
 
 		public Camera()
 			: base() {
-				_lookAt = new UniversalPosition();
+				_lookAt = new UniversalCoordinate();
 			resetLook();
 			Game.RegisterMouseAction(this);
 		}

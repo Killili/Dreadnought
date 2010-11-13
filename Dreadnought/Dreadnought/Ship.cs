@@ -40,7 +40,7 @@ namespace Dreadnought {
 		private Shadow shadow;
 		
 		public Ship(){
-			Position = new UniversalPosition();
+			Position = new UniversalCoordinate();
 			Game.RegisterPreDraw(this);
 			Game.RegisterUpdate(this);
 			Game.RegisterDraw(this);
