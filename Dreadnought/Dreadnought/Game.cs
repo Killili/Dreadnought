@@ -19,6 +19,7 @@ namespace Dreadnought {
 		public static Game GameInstance;
 		GraphicsDeviceManager graphics;
 		internal Ship Ship;
+		internal Uplink Uplink;
 		private Grid grid;
 		public Sidemenu UI;
 		
@@ -66,6 +67,7 @@ namespace Dreadnought {
 		public Game() {
 			GameInstance = this;
 			config();
+			Uplink = new Uplink("Test","Blub");
 		}
 
 		protected override void Initialize() {
@@ -75,7 +77,7 @@ namespace Dreadnought {
 			Camera = new Common.Camera();
 			// init fps counter
 			var fpsCntr = new FPSCounter(this);
-			fpsCntr.Updated += delegate { this.Window.Title = "Dreadnought  (FPS: " + fpsCntr.FPS.ToString() + " )"; };
+			fpsCntr.Updated += delegate { this.Window.Title = String.Format("Dreadnought  FPS: {0}  ID: {1}",fpsCntr.FPS,Uplink.ID); };
 			Components.Add(fpsCntr);
 			
 			// add ship
@@ -139,9 +141,9 @@ namespace Dreadnought {
 
 			drawList.Each(ent => ent.Draw(gameTime));
 
-			Overlay.Begin(0, BlendState.Opaque, SamplerState.PointClamp, null, null);
-			drawOverlayList.Each(ent => ent.DrawOverlay(gameTime));
-			Overlay.End();
+			//Overlay.Begin(0, BlendState.Opaque, SamplerState.PointClamp, null, null);
+			//drawOverlayList.Each(ent => ent.DrawOverlay(gameTime));
+			//Overlay.End();
 
 			base.Draw(gameTime);
 			

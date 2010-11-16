@@ -3,7 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:converter="clr-namespace:DreadnoughtUI.Converter"
              mc:Ignorable="d" Height="600" Width="200">
+    <UserControl.Resources>
+        <converter:OrderConverter x:Key="OrderConverter" />
+    </UserControl.Resources>
     <UserControl.Background>
         <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
             <GradientStop Color="Black" Offset="1" />
@@ -12,6 +16,21 @@
     </UserControl.Background>
     <Grid>
         <Button Content="Button" Height="28" HorizontalAlignment="Left" Margin="12,12,0,0" Name="button1" VerticalAlignment="Top" Width="149" Click="button1_Click" />
-        <Slider Height="23" HorizontalAlignment="Left" Margin="12,46,0,0" Name="slider1" VerticalAlignment="Top" Width="149" ValueChanged="slider1_ValueChanged" Maximum="100" />
+        <ListBox Margin="12,75,21,12" Name="orders" ItemTemplate="{DynamicResource DataTemplate}" DataContext="{Binding}" ItemsSource="{Binding}" HorizontalContentAlignment="Stretch">
+        	<ListBox.Resources>
+                <DataTemplate x:Key="DataTemplate" >
+        			<Border BorderBrush="Black" BorderThickness="1" Margin="1" MouseLeftButtonDown="grid_MouseLeftButtonDown">
+        				<Grid x:Name="grid" d:DesignWidth="249" d:DesignHeight="51" Background="{Binding State, Converter={StaticResource OrderConverter}}" Height="40" VerticalAlignment="Top">
+        					<Grid.ColumnDefinitions>
+        						<ColumnDefinition Width="40"/>
+        						<ColumnDefinition/>
+        					</Grid.ColumnDefinitions>
+        					<Label Content="{Binding Description}" Margin="8,5,8,8" Width="Auto" Grid.Column="1" HorizontalAlignment="Stretch" FontSize="9.333"/>
+        					<Image Margin="5"/>
+        				</Grid>
+        			</Border>
+        		</DataTemplate>
+        	</ListBox.Resources>
+        </ListBox>
     </Grid>
 </UserControl>

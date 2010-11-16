@@ -14,3 +14,5 @@ Dreadnought.suo
 *.suo
 *.csproj.vs10x
 *.contentproj.vs10x
+DreadnoughtOvermind/obj/*
+DreadnoughtOvermind/bin/*

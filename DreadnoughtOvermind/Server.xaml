@@ -1,0 +1,9 @@
+﻿<Application x:Class="DreadnoughtOvermind.Server"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:src ="clr-namespace:DreadnoughtOvermind"    
+             StartupUri="MainWindow.xaml" Startup="startServer">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>

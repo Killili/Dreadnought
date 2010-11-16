@@ -11,34 +11,30 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using DreadnoughtOvermind.Orders;
+using System.Collections.ObjectModel;
 namespace DreadnoughtUI {
-	public class OrderEventArgs : EventArgs {
-		public double Speed;
-		public OrderEventArgs(double speed) {
-			this.Speed = speed;
-		}
-	}
 	/// <summary>
 	/// Interaction logic for UserControl1.xaml
 	/// </summary>
 	public partial class Sidemenu : UserControl {
 		
 		public Graph Graph;
-
-		public event EventHandler<OrderEventArgs> Orders;
-
+		public ObservableCollection<Order> Orders = new ObservableCollection<Order>();
 		public Sidemenu() {
 			InitializeComponent();
+			orders.ItemsSource = Orders;
 		}
 
 		private void button1_Click(object sender, RoutedEventArgs e) {
-			Graph = new Graph();
-			Graph.Show();
+			Orders.Add(new Order("TestOrder"));
+
 		}
 
-		private void slider1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
-			if(Orders != null) Orders(this, new OrderEventArgs(slider1.Value));
+		private void grid_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e){
+			var o = ((FrameworkElement)sender).DataContext as Order;
+			o.State = Order.States.Send;
 		}
+
 	}
 }

@@ -125,6 +125,7 @@
     <Compile Include="Common\Shadow.cs" />
     <Compile Include="Common\SkySphere.cs" />
     <Compile Include="Base\Entity.cs" />
+    <Compile Include="Common\Uplink.cs" />
     <Compile Include="Grid.cs" />
     <Compile Include="Helper\Cockpit.cs" />
     <Compile Include="Helper\FlightAssist.cs" />
@@ -139,6 +140,10 @@
     <Content Include="GameThumbnail.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\DreadnoughtOvermind\DreadnoughtOvermind.csproj">
+      <Project>{AD1AAE9C-B25C-41C0-9E0A-F0D2814E87C6}</Project>
+      <Name>DreadnoughtOvermind</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\DreadnoughtUI\DreadnoughtUI.csproj">
       <Project>{390E1C7E-D470-48AA-B1D7-2CECD6A325BD}</Project>
       <Name>DreadnoughtUI</Name>
