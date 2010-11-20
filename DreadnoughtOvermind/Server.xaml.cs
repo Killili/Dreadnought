@@ -17,6 +17,7 @@ namespace DreadnoughtOvermind {
 	public partial class Server : Application {
 
 		private ObservableCollection<Client> clients = new ObservableCollection<Client>();
+		
 		public ObservableCollection<Client> Clients {
 			get { return clients; }
 		}

@@ -22,7 +22,6 @@ namespace Dreadnought.Common {
 			Thread rt = new Thread(new ParameterizedThreadStart(reciveThread));
 			rt.Start(netStream);
 			LoginResponse.OnRecive += handleLogin;
-			
 			Send(new DreadnoughtOvermind.Reports.Login("Test", "Blub"));
 		}
 
