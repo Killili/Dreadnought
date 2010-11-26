@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Input;
 using Dreadnought;
 
 namespace Dreadnought.Helper {
-	class Cockpit : Base.Entity {
+	class Cockpit : Base.GameEntity {
 		private Ship ship;
 		public Cockpit(Ship ship)
 			: base() {

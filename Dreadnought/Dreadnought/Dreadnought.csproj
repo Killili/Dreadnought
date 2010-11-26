@@ -118,7 +118,6 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Base\UniversalCoordinate.cs" />
     <Compile Include="Common\Camera.cs" />
     <Compile Include="Common\Extensions.cs" />
     <Compile Include="Common\FPSCounter.cs" />

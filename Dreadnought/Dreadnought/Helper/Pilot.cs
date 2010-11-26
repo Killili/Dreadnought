@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
 namespace Dreadnought.Helper {
-	class Pilot :Entity {
+	class Pilot :GameEntity {
 		private Ship ship;
 		private Vector3? faceDir;
 		public Pilot(Ship ship):base() {

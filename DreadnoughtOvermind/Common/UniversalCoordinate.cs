@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
-using Dreadnought.Common;
 
-namespace Dreadnought.Base {
+namespace DreadnoughtOvermind.Common {
 	public class UniversalCoordinate {
 		const float	StellarGridSize = 1000f;
 		const float StellarGridWidth = StellarGridSize*2;
@@ -74,11 +73,11 @@ namespace Dreadnought.Base {
 			this.localPos = Vector3.Zero;
 		}
 
-		public Vector3 CameraSpace(Camera camera){
+		public Vector3 CameraSpace(UniversalCoordinate cameraLookAt) {
 			Vector3 ret;
-			ret.X = Stellar.X - camera.LookAt.Stellar.X;
-			ret.Y = Stellar.Y - camera.LookAt.Stellar.Y;
-			ret.Z = Stellar.Z - camera.LookAt.Stellar.Z;
+			ret.X = Stellar.X - cameraLookAt.Stellar.X;
+			ret.Y = Stellar.Y - cameraLookAt.Stellar.Y;
+			ret.Z = Stellar.Z - cameraLookAt.Stellar.Z;
 			ret *= StellarGridSize;
 			ret += localPos;// - camera.LookAt.Local;
 			return ret;

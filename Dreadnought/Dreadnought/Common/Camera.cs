@@ -9,10 +9,11 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using Dreadnought.Base;
+using DreadnoughtOvermind.Common;
 
 
 namespace Dreadnought.Common {
-	public class Camera : Entity {
+	public class Camera : GameEntity {
 
 		public Quaternion Orientation;
 		public Matrix World;

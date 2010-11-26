@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Dreadnought.Base;
 
 namespace Dreadnought {
-    class Grid : Entity {
+    class Grid : GameEntity {
 
         private Effect effect;
         private List<VertexPositionColor> pointList;
@@ -22,8 +22,7 @@ namespace Dreadnought {
             pointOrder = new List<short>();
             Scale = 5000f;
             Size = 10;
-			  Position = new UniversalCoordinate();
-
+			  
             // fill list with vertices
             // dont try to put both inner for-llops into one
             // this would change the vertices order!
@@ -72,7 +71,7 @@ namespace Dreadnought {
 
         public override void Draw( GameTime gameTime ) {
 			  GraphicsDevice.BlendState = BlendState.NonPremultiplied;
-			  Matrix world = Matrix.CreateScale(Scale) * Matrix.CreateWorld(Position.CameraSpace(Game.Camera), Vector3.Forward, Vector3.Up) * Matrix.CreateTranslation(new Vector3(-((Size / 2f) * Scale)));
+			  Matrix world = Matrix.CreateScale(Scale) * Matrix.CreateWorld(Position.CameraSpace(Game.Camera.LookAt), Vector3.Forward, Vector3.Up) * Matrix.CreateTranslation(new Vector3(-((Size / 2f) * Scale)));
 			  effect.Parameters["BlendPoint"].SetValue(Vector3.Zero);
 			  effect.Parameters["gWVP"].SetValue(world * Game.Camera.View * Game.Camera.Projection);
 			  effect.Parameters["gWorld"].SetValue(world);

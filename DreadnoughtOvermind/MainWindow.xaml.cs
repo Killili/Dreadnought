@@ -18,14 +18,14 @@ namespace DreadnoughtOvermind {
 	/// </summary>
 	
 	public partial class MainWindow : Window {
-		public String popo = "ARSCH";
 		public MainWindow() {
 			InitializeComponent();
 		}
 
-		private void listBox1_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+		private void listBox1_SelectionChanged(object sender, MouseButtonEventArgs e) {
 			var o = ((ListBox)sender).SelectedItem as Client;
-			//o.Send("Test");
+			o.Send( new Reports.Chat(null,"/","Hallo"));
+			
 		}
 	}
 }

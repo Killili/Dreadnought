@@ -5,6 +5,10 @@
         Title="MainWindow" Height="350" Width="525">
     
     <Grid>
-        <ListBox Height="287" HorizontalAlignment="Left" Margin="12,12,0,0" Name="listBox1" VerticalAlignment="Top" Width="152" ItemsSource="{Binding Source={x:Static Application.Current}, Path=(Clients) }" SelectionChanged="listBox1_SelectionChanged" />
+        <GroupBox Header="Clients" HorizontalAlignment="Left" Name="groupBox1" Width="316" Margin="12,0,0,12">
+            <Grid>
+                <ListBox Name="listBox1" ItemsSource="{Binding Source={x:Static Application.Current}, Path=(Clients) }" DisplayMemberPath="Info" MouseDoubleClick="listBox1_SelectionChanged" HorizontalAlignment="Left" Width="141" />
+            </Grid>
+        </GroupBox>
     </Grid>
 </Window>

@@ -12,10 +12,13 @@ using System.Net;
 using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using System.Collections.Concurrent;
+using DreadnoughtOvermind.Simulation;
+using DreadnoughtOvermind.Common;
 
 namespace DreadnoughtOvermind {
 	public partial class Server : Application {
-
+		public static Server Instance = null;
 		private ObservableCollection<Client> clients = new ObservableCollection<Client>();
 		
 		public ObservableCollection<Client> Clients {
@@ -23,14 +26,16 @@ namespace DreadnoughtOvermind {
 		}
 		
 		public ObservableCollection<Order> orders = new ObservableCollection<Order>();
-		public ObservableCollection<Report> reports = new ObservableCollection<Report>();
+		public ObservableCollection<NetworkMessage> reports = new ObservableCollection<NetworkMessage>();
+		
 		public Server()
 			: base() {
+				Instance = this;
+				Simulator sim = new Simulator(10);
 		}
 
-
-		private Socket server;
-		
+		#region Network
+		private Socket server;	
 		void startServer(object sender, EventArgs e) {
 			server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			server.Bind(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 33445));
@@ -62,8 +67,8 @@ namespace DreadnoughtOvermind {
 					lock(so) {
 						object data = bf.Deserialize(new MemoryStream(so.Buffer.ToArray(), 4, so.CurrentMessageLength-4));
 						if(data.GetType() == typeof(Login)) {
-							so.Client = new Client(so);
-							Send(so,new LoginResponse(so.Client));
+							//TODO Name PW checken
+							so.Client = new Client(so,(Login)data);
 						}
 						so.Buffer.RemoveRange(0, so.CurrentMessageLength);
 						so.CurrentMessageLength = 0;
@@ -95,7 +100,7 @@ namespace DreadnoughtOvermind {
 				Console.WriteLine(e.ToString());
 			}
 		}
-
+		#endregion
 
 	}
 	public class StateObject {

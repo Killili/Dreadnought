@@ -5,22 +5,24 @@ using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework;
+using Dreadnought.Base;
 
 namespace Dreadnought.Common {
-    class SkySphere {
+    class SkySphere:GameEntity {
         Model model;
         TextureCube texture;
         Effect effect;
-        Game game;
 
-        public SkySphere(Game game) {
-            this.game = game;
+        public SkySphere() {
+				Game.RegisterDraw(this);
+				Game.RegisterUpdate(this);
+				Load();
         }
 
-        public void Load(ContentManager content) {
-            model = content.Load<Model>("Sphere");
-            texture = content.Load<TextureCube>("SunInSpace");
-            effect = content.Load<Effect>("SkySphere");
+        void Load() {
+            model = Game.Content.Load<Model>("Sphere");
+				texture = Game.Content.Load<TextureCube>("SunInSpace");
+				effect = Game.Content.Load<Effect>("SkySphere");
 
             effect.Parameters["SurfaceTexture"].SetValue(texture);
 
@@ -31,22 +33,22 @@ namespace Dreadnought.Common {
             }
         }
 
-        public void Update(GameTime gameTime) {
-                effect.Parameters["EyePosition"].SetValue( game.Camera.Position.Local );
-                effect.Parameters["World"].SetValue( Matrix.CreateScale(1000) * game.Camera.World );
-                effect.Parameters["View"].SetValue( game.Camera.View );
-                effect.Parameters["Projection"].SetValue( game.Camera.Projection );
+        public override void Update(GameTime gameTime) {
+                effect.Parameters["EyePosition"].SetValue( Game.Camera.Position.Local );
+                effect.Parameters["World"].SetValue( Matrix.CreateScale(1000) * Game.Camera.World );
+                effect.Parameters["View"].SetValue( Game.Camera.View );
+                effect.Parameters["Projection"].SetValue( Game.Camera.Projection );
         }
 
-        public void Draw() {
+		  public override void Draw(GameTime gameTime) {
 
-            game.GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
+            Game.GraphicsDevice.RasterizerState = RasterizerState.CullClockwise;
 
             foreach (ModelMesh mesh in model.Meshes) {
                 mesh.Draw();
             }
             
-            game.GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            Game.GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
         }
 
     }

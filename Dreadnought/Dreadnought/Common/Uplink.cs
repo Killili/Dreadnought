@@ -9,6 +9,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using DreadnoughtOvermind;
 using DreadnoughtOvermind.Reports;
+using DreadnoughtOvermind.Common;
 
 
 namespace Dreadnought.Common {
@@ -22,16 +23,21 @@ namespace Dreadnought.Common {
 			Thread rt = new Thread(new ParameterizedThreadStart(reciveThread));
 			rt.Start(netStream);
 			LoginResponse.OnRecive += handleLogin;
+			Chat.OnRecive += handleChat;
 			Send(new DreadnoughtOvermind.Reports.Login("Test", "Blub"));
 		}
 
-		private void handleLogin(Object sender , Report res ) {
+		private void handleLogin(Object sender , LoginResponse res ) {
 			var rep = res as LoginResponse;
 			if(rep.Accepted) {
 				this.ID = rep.ID;
 			} else {
 				throw new Exception("Login Denied");
 			}
+		}
+		private void handleChat(Object sender, Chat res) {
+			var rep = res as Chat;
+			System.Windows.Forms.MessageBox.Show(rep.Description());
 		}
 
 		private NetworkStream netStream;
@@ -52,20 +58,30 @@ namespace Dreadnought.Common {
 			int currentMessageLength = 0;
 			List<byte> buffer = new List<byte>();
 			int len = 0;
-			while(!shutdown) {
-				len = ns.Read(chunk, 0, chunk.Length);
-				buffer.AddRange(chunk.Take(len));
-				if(buffer.Count >= 4 && currentMessageLength == 0) {
-					currentMessageLength = BitConverter.ToInt32(buffer.Take(4).ToArray(), 0);
-				} 
-				if(buffer.Count >= currentMessageLength) {
-					Object res = serializer.Deserialize(new MemoryStream(buffer.ToArray(), 4, currentMessageLength-4));
-					if(res.GetType().IsSubclassOf(typeof(Report))) {
-						((Report)res).CallSubscribers(this);
+			try {
+				while(!shutdown) {
+
+
+					len = ns.Read(chunk, 0, chunk.Length);
+
+
+					buffer.AddRange(chunk.Take(len));
+					if(buffer.Count >= 4 && currentMessageLength == 0) {
+						currentMessageLength = BitConverter.ToInt32(buffer.Take(4).ToArray(), 0);
 					}
-					buffer.RemoveRange(0, currentMessageLength);
-					currentMessageLength = 0;
+					if(buffer.Count >= currentMessageLength) {
+						Object res = serializer.Deserialize(new MemoryStream(buffer.ToArray(), 4, currentMessageLength - 4));
+						if(res.GetType().IsSubclassOf(typeof(NetworkMessage))) {
+							((NetworkMessage)res).CallSubscribers(this);
+						}
+						buffer.RemoveRange(0, currentMessageLength);
+						currentMessageLength = 0;
+					}
 				}
+			} catch(SocketException e) {
+				Console.WriteLine(e.Message);
+			} catch(IOException e) {
+				Console.WriteLine(e.Message);
 			}
 		}
 

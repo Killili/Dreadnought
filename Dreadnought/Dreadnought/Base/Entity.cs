@@ -5,14 +5,16 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Graphics;
+using DreadnoughtOvermind.Simulation;
+using DreadnoughtOvermind.Common;
 
 namespace Dreadnought.Base {
-	public class Entity{
+	public class GameEntity:SimulationEntity{
 		public Dreadnought.Game Game;
 		public GraphicsDevice GraphicsDevice;
-		public UniversalCoordinate Position;
+		public UniversalCoordinate Position = new UniversalCoordinate();
 
-		public Entity():base(){
+		public GameEntity():base(){
 			Game = Dreadnought.Game.GameInstance;
 			GraphicsDevice = Game.GameInstance.GraphicsDevice;
 		}

@@ -10,7 +10,7 @@ using Dreadnought.Common;
 using Dreadnought.Base;
 
 namespace Dreadnought {
-	class Ship : Entity {
+	class Ship : GameEntity {
 		#region Fileds and Constructors
 		
 		//internal stuff
@@ -40,7 +40,6 @@ namespace Dreadnought {
 		private Shadow shadow;
 		
 		public Ship(){
-			Position = new UniversalCoordinate();
 			Game.RegisterPreDraw(this);
 			Game.RegisterUpdate(this);
 			Game.RegisterDraw(this);

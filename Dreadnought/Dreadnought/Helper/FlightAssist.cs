@@ -10,7 +10,7 @@ using Dreadnought;
 using Dreadnought.Base;
 
 namespace Dreadnought.Helper {
-	class FlightAssist:Entity {
+	class FlightAssist:GameEntity {
 		private TimeSpan lastUpdate;
 		private TimeSpan timeout;
 		private Ship ship;

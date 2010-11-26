@@ -13,22 +13,22 @@ using System.Windows.Forms.Integration;
 using DreadnoughtUI;
 using Dreadnought.Base;
 using Dreadnought.Helper;
+using DreadnoughtOvermind.Common;
 
 namespace Dreadnought {
 	public class Game : Microsoft.Xna.Framework.Game {
 		public static Game GameInstance;
 		GraphicsDeviceManager graphics;
-		internal Ship Ship;
 		internal Uplink Uplink;
 		private Grid grid;
 		public Sidemenu UI;
 		
-		private List<Entity> drawList = new List<Entity>();
-		private List<Entity> preDrawList = new List<Entity>();
-		private List<Entity> drawOverlayList = new List<Entity>();
-		private List<Entity> updateList = new List<Entity>();
-		private List<Entity> keyboardActionList = new List<Entity>();
-		private List<Entity> mouseActionList = new List<Entity>();
+		private List<GameEntity> drawList = new List<GameEntity>();
+		private List<GameEntity> preDrawList = new List<GameEntity>();
+		private List<GameEntity> drawOverlayList = new List<GameEntity>();
+		private List<GameEntity> updateList = new List<GameEntity>();
+		private List<GameEntity> keyboardActionList = new List<GameEntity>();
+		private List<GameEntity> mouseActionList = new List<GameEntity>();
 
 		public Camera Camera { get; private set; }
 		public Matrix World { get; private set; }
@@ -79,13 +79,8 @@ namespace Dreadnought {
 			var fpsCntr = new FPSCounter(this);
 			fpsCntr.Updated += delegate { this.Window.Title = String.Format("Dreadnought  FPS: {0}  ID: {1}",fpsCntr.FPS,Uplink.ID); };
 			Components.Add(fpsCntr);
-			
-			// add ship
-			Ship = new Ship();
-			new Cockpit(Ship);
-			new Pilot(Ship);
-			new FlightAssist(Ship);
-
+			// add Sky
+			SkySphere sk = new SkySphere();
 			// add grid
 			grid = new Grid();
 			
@@ -118,9 +113,9 @@ namespace Dreadnought {
 			
 			//grid.Position = gp.CameraSpace(Camera);
 			if(grid.Position.DistanceTo(Camera.LookAt) >= grid.Scale) {
-				grid.Position = new UniversalCoordinate( Ship.Position );
+				//grid.Position = new UniversalCoordinate( Ship.Position );
 			}
-			Camera.LookAt = Ship.Position;
+			//Camera.LookAt = Ship.Position;
 
 			
 			base.Update(gameTime);
@@ -149,26 +144,26 @@ namespace Dreadnought {
 			
 		}
 		#region Register Methods
-		internal void RegisterUpdate(Base.Entity entity) {
+		internal void RegisterUpdate(Base.GameEntity entity) {
 			updateList.Add(entity);
 		}
 
-		internal void RegisterPreDraw(Base.Entity entity) {
+		internal void RegisterPreDraw(Base.GameEntity entity) {
 			preDrawList.Add(entity);
 		}
 
-		internal void RegisterDraw(Base.Entity entity) {
+		internal void RegisterDraw(Base.GameEntity entity) {
 			drawList.Add(entity);
 		}
 
-		internal void RegisterOverlay(Base.Entity entity) {
+		internal void RegisterOverlay(Base.GameEntity entity) {
 			drawOverlayList.Add(entity);
 		}
 
-		internal void RegisterMouseAction(Base.Entity entity) {
+		internal void RegisterMouseAction(Base.GameEntity entity) {
 			mouseActionList.Add(entity);
 		}
-		internal void RegisterKeyboardAction(Base.Entity entity) {
+		internal void RegisterKeyboardAction(Base.GameEntity entity) {
 			keyboardActionList.Add(entity);
 		}
 		#endregion
