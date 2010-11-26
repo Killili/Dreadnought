@@ -30,7 +30,7 @@ namespace Dreadnought {
 		//external stuff
 		public enum ThrustDirection { Forward, Backward, FrontLeft, FrontRight, BackLeft, BackRight, FrontUp, FrontDown, BackUp, BackDown, CenterLeftUp, CenterLeftDown, CenterRightUp, CenterRightDown }
 		public Vector3 Speed = new Vector3(0.0f);
-		public Quaternion Orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0);
+		//public Quaternion Orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0);
 		public BoundingBox BoundingBox = new BoundingBox(new Vector3(-8, -10, 37), new Vector3(8, 10, -37));
 
 		//constant stuff
@@ -59,13 +59,38 @@ namespace Dreadnought {
 			initThrusters();
 		}
 
+		Vector3 velocity = Vector3.Zero;
+		Vector3 angularVelocity = Vector3.Zero;
+		public Vector3 WantedVelocity = Vector3.Zero;
+		public Vector3 WantedAngularVelocity = Vector3.Zero;
+		public Quaternion WantedOrientation = Quaternion.CreateFromAxisAngle(Vector3.Up, 1.234f);
+		public UniversalCoordinate Position;
+		public Quaternion Orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, 0);
+
+		private float stepwidth = 0;
 		public override void Update(GameTime gt) {
 			gameTime = gt.TotalGameTime.Ticks;
-			Position.Local += moment;
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Up, (float)(rotation.Y * turnConst)));
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Right, (float)(rotation.X * turnConst)));
-			Orientation = Quaternion.Concatenate(Orientation, Quaternion.CreateFromAxisAngle(model.Root.Transform.Forward, (float)(rotation.Z * turnConst)));
+
+			Position.Local += velocity*gt.ElapsedGameTime.Milliseconds;
+
+			Quaternion tempDir;
+			float dist;
+			Quaternion delta = Quaternion.Conjugate(Orientation) * WantedOrientation;
+			if(Quaternion.Dot(Orientation, WantedOrientation) < 0f) {
+				tempDir = Quaternion.Negate(WantedOrientation);
+				dist = 2f * (float)Math.Acos(MathHelper.Clamp(delta.W * -1, -1, 1));
+			} else {
+				tempDir = WantedOrientation;
+				dist = 2f * (float)Math.Acos(MathHelper.Clamp(delta.W, -1, 1));
+			}
+			float steps = dist / (float)(Math.PI/200);
+			if( steps <= 1f ) {
+				Orientation = WantedOrientation;
+			} else {
+				Orientation = Quaternion.Slerp(Orientation, WantedOrientation, 1f / steps);
+			}
 			Orientation.Normalize();
+
 			Speed = Vector3.Transform(moment, Orientation);
 
 

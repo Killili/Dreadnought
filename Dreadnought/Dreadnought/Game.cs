@@ -139,9 +139,9 @@ namespace Dreadnought {
 
 			drawList.Each(ent => ent.Draw(gameTime));
 
-			Overlay.Begin(0, BlendState.Opaque, SamplerState.PointClamp, null, null);
-			drawOverlayList.Each(ent => ent.DrawOverlay(gameTime));
-			Overlay.End();
+			//Overlay.Begin(0, BlendState.Opaque, SamplerState.PointClamp, null, null);
+			//drawOverlayList.Each(ent => ent.DrawOverlay(gameTime));
+			//Overlay.End();
 
 			base.Draw(gameTime);
 			
