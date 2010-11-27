@@ -80,13 +80,18 @@ namespace Dreadnought {
 			
 			// add ship
 			Ship = new Ship();
-			new Cockpit(Ship);
-			new Pilot(Ship);
-			new FlightAssist(Ship);
+			//new Cockpit(Ship);
+			//new Pilot(Ship);
+			//new FlightAssist(Ship);
 
 			// add grid
 			grid = new Grid();
-			
+			NavGui nav = new NavGui();
+			nav.OnPointSet += (sender, position) => {
+				var la = Matrix.CreateLookAt(Camera.LookAt.Local, position, Vector3.Up);
+				la = Matrix.Invert(la);
+				Ship.WantedOrientation = Quaternion.CreateFromRotationMatrix(la);
+			};
 			base.Initialize();
 		}
 
@@ -116,9 +121,9 @@ namespace Dreadnought {
 			
 			//grid.Position = gp.CameraSpace(Camera);
 			if(grid.Position.DistanceTo(Camera.LookAt) >= grid.Scale) {
-				grid.Position = new UniversalCoordinate( Ship.Position );
+				//grid.Position = new UniversalCoordinate( Ship.Position );
 			}
-			Camera.LookAt = Ship.Position;
+			//Camera.LookAt = Ship.Position;
 
 			
 			base.Update(gameTime);
