@@ -83,27 +83,30 @@ namespace Dreadnought.Common {
 				Vector3 pos1 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 0), Game.Camera.Projection, Game.Camera.View, Game.Camera.World);
 				Vector3 pos2 = GraphicsDevice.Viewport.Unproject(new Vector3(ms.X, ms.Y, 1), Game.Camera.Projection, Game.Camera.View, Game.Camera.World);
 				Vector3 dir = Vector3.Normalize(pos2 - pos1);
-				Ray ray = new Ray(pos1, dir);
+				Ray ray;
 				float? dist;
 				switch(state) {
 					case states.ChooseXZ:
+						ray = new Ray(pos1, dir);
 						dist = ray.Intersects(new Plane(Vector3.Up, 0));
 						if(dist != null) {
 							selectedXZ = ray.Position + (dir * (float)dist);
 							selectedPoint = selectedXZ;
 							navTriangle[1].Position = selectedXZ;
-							Console.WriteLine(selectedXZ);
+							
 						}
 						break;
 					case states.ChooseY:
-						Vector3 planeNorm = Vector3.Normalize(selectedXZ);
-						planeNorm = Vector3.Negate(planeNorm);
-						dist = ray.Intersects(new Plane(Vector3.Normalize(planeNorm), selectedXZ.Length()));
+						Vector3 planeNorm = Vector3.Transform(Vector3.Backward,Game.Camera.Orientation);
+						planeNorm.Y = 0;
+						planeNorm = Vector3.Normalize(planeNorm);
+						ray = new Ray( pos1 - selectedXZ , dir);
+						dist = ray.Intersects(new Plane(Vector3.Normalize(planeNorm), 0f));
 						if(dist != null) {
 							Vector3 temp = ray.Position + (dir * (float)dist);
 							selectedPoint.Y = temp.Y;
 							navTriangle[2].Position = selectedPoint;
-							Console.WriteLine(selectedPoint);
+							
 						}
 						break;
 				}
