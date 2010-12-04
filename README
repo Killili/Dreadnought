@@ -10,48 +10,56 @@
 ##Spielidee:
 	Schlacht-Raumschiff Sim (KEIN arcade)
 	newtonische flugsimulation
-	homeworld navigation; hold rechtsklick = schiff drehen
-	salvage: großer kram für große schiffe
-			kleiner kram für kleine schiffe
+	homeworld navigation
+	cinema 4D kamera navigation
+	salvage: 
 			evolution mit schiffmodellen (klauen is besser als bauen)
 			kastenbau-schiffe
-			nach einem kampf, muss der verlierer (sollte er alle HP
-				verlieren) dem angreifer sein schiff überlassen. angreifer
-				kann drauf verzichten.
-				beim tausch werden die schiffe "wie sie sind" getauscht
-				falls kein tausch stattfindet, repariert der verlierer
-				seinen antrieb (kostet nur zeit, kein material) und muss
-				sich auf die suche nach schrott machen, um sein schiff
-				wieder aufzubauen
-				der gewinner kann den verlierer plündern
+			der gewinner kann den verlierer plündern
 	NTH: wegpunkte beim navigieren
 	
 ##schadensmodell
 	jedes schiff besteht aus bauteilen, zB front-, mittel-, heckteil
-	jedes teil hat seine eigene hp (bei 0hp verliert es seine funktion?)
+	max "20" teile, mehr module können nicht gebaut werde, da man
+		energie braucht, um module zusammen zu halten
+	jedes teil hat seine eigene hp
+	energiequelle ist schwieriger zu zerstören als alles andere
+	energiequelle explodiert bei 0hp
+	übrige energie ist für schilde
 
 ##ohne techtree, alles ist verfügbar, muss nur gefunden/gebaut werden
 ##bauen mit salvaged zeug:
-	counter-weapons; weapon vs schild
-		weapons: partikel -> kinetic -> Missle
-		partikel = partikelwaffe mit laser-zielvisir
-			kinetik-bahn vorrausberechnen
-			auf kinetik schießen -> flugbahn ändern
-		kinetic = aim-system berechnet flugbahn, missle explodiert
-		missle = weicht zielsuchsystem von partikel aus
-	slot für waffen UND schild
-	3 panzerungen gegen alle art von waffen
-	partikel/schilde brauchen strom
-	kinetic/missle brauchen lagerplatz
-	warp-generator: muss stärker sein, als die masse des schiffes;
-		mindestgeschwindigkeit für spring muss erreicht werden
-	warp-jammer: erhöht die masse des gegner schiffes prozentual
-		kann zusammengeschaltet werden, d.h. ein jammer erhöht masse
-		um zB 10% des letzten wertes (1.stufe: 110%, 2.stufe 121%, 3.stufe:133%....)
+		waffen:
+		strahlen-waffe: braucht strom, machen direkt schaden
+		kinetic: braucht munition, kein strom, kleine kinect macht große missle kaputt
+		missle:  braucht munition, kein strom, kleine missle macht große kinect kaputt
+		
+	jedes modul hat slots für waffen
+	schilde brauchen strom, helfen gegen alles
+	warp-generator: man braucht energie; energie proportional zur masse
+		warp-sprung geschwindigkeit = 0 !!
+		hinterlässt warp-spur
+	tracktor-strahl: beschleunigt/bremst gegner schiff
+		kann zusammengeschaltet werden,
 		1.stufe = 1 jammer, 2.stufe = 2 jammer
 		so können auch mehrere kleine schiffe ein großes vor dem flüchten stoppen
+	tracktor-jammer: counter stufe zum tracktor-strahl
 	alle attribute aller teile (panzerung, waffen, ...) haben eine range an werten
-		unique items???
+	unique items!!!
+
+
+##hierarchie
+	dynamisches flotten-mgmnt
+	hierarchie definiert die befehlskette
+	
+	
+##gui
+	3-spalten layout
+	links:	hierarchie baum
+	mitte:	3D view
+	rechts:	kampfevents (werden automatisch generiert, orders können selbst generiert werden)
+			sensorevents
+
 
 
 ##prologe
